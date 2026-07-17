@@ -6,228 +6,276 @@
   <title>3D Globe</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
-
-    html {
-      height: 400vh;
-      background: #000;
-    }
-
+    html { height: 500vh; background: #000; }
     body {
-      position: fixed;
-      top: 0; left: 0;
-      width: 100%; height: 100%;
-      overflow: hidden;
-      background: radial-gradient(ellipse at center, #0a0a1a 0%, #000 100%);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      perspective: 1200px;
+      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      overflow: hidden; background: #000;
     }
-
-    .globe-scene {
-      position: relative;
-      width: 400px;
-      height: 400px;
-      transform-style: preserve-3d;
-    }
-
-    .globe-sphere {
-      width: 100%;
-      height: 100%;
-      border-radius: 50%;
-      position: relative;
-      transform-style: preserve-3d;
-      overflow: hidden;
-    }
-
-    .globe-sphere img {
-      width: 140%;
-      height: 100%;
-      object-fit: cover;
+    #globe {
       position: absolute;
-      top: 0;
-      left: -20%;
-      transform-origin: center center;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
     }
-
-    .globe-shadow {
+    #stars {
+      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      pointer-events: none; z-index: 0;
+    }
+    #globeCanvas {
+      position: relative; z-index: 2;
+    }
+    .glow {
       position: absolute;
-      bottom: -60px;
-      left: 50%;
-      transform: translateX(-50%);
-      width: 300px;
-      height: 40px;
-      background: radial-gradient(ellipse, rgba(0,100,255,0.2) 0%, transparent 70%);
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
       border-radius: 50%;
-      filter: blur(10px);
+      background: radial-gradient(circle, rgba(30,100,200,0.12) 0%, transparent 70%);
+      pointer-events: none; z-index: 1;
     }
-
-    .globe-atmosphere {
+    .atmo {
       position: absolute;
-      top: -8px; left: -8px;
-      right: -8px; bottom: -8px;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
       border-radius: 50%;
-      background: radial-gradient(circle at 35% 35%, rgba(80,160,255,0.15), transparent 50%);
-      pointer-events: none;
+      border: 1px solid rgba(100,180,255,0.08);
+      pointer-events: none; z-index: 3;
     }
-
-    .stars {
-      position: fixed;
-      top: 0; left: 0;
-      width: 100%; height: 100%;
-      pointer-events: none;
+    #progress {
+      position: fixed; top: 0; left: 0; height: 2px;
+      background: linear-gradient(90deg, #0066ff, #00ccff);
+      z-index: 100; width: 0%;
     }
-
-    .progress {
-      position: fixed;
-      top: 0; left: 0;
-      height: 2px;
-      background: linear-gradient(90deg, #0066ff, #00ccff, #0066ff);
-      z-index: 100;
-      width: 0%;
-    }
-
-    .label {
-      position: fixed;
-      bottom: 50px;
-      left: 50%;
-      transform: translateX(-50%);
-      color: rgba(255,255,255,0.3);
-      font-family: 'SF Mono', monospace;
-      font-size: 11px;
-      letter-spacing: 4px;
-      text-transform: uppercase;
-      z-index: 10;
+    #label {
+      position: fixed; bottom: 40px; left: 50%; transform: translateX(-50%);
+      color: rgba(255,255,255,0.3); font-family: monospace;
+      font-size: 11px; letter-spacing: 4px; text-transform: uppercase; z-index: 10;
     }
   </style>
 </head>
 <body>
-  <canvas class="stars" id="stars"></canvas>
-  <div class="progress" id="progress"></div>
+  <canvas id="stars"></canvas>
+  <div id="progress"></div>
 
-  <div class="globe-scene" id="scene">
-    <div class="globe-atmosphere"></div>
-    <div class="globe-sphere" id="sphere">
-      <img id="earth" src="https://raw.githubusercontent.com/turban/webgl-earth/master/images/2_no_clouds_4k.jpg" alt="Earth">
-    </div>
-    <div class="globe-shadow"></div>
+  <div id="globe">
+    <div class="glow" id="glow"></div>
+    <div class="atmo" id="atmo"></div>
+    <canvas id="globeCanvas"></canvas>
   </div>
 
-  <div class="label">scroll to rotate</div>
+  <div id="label">scroll to explore</div>
 
   <script>
-    // Stars
-    const starsCanvas = document.getElementById('stars');
-    const sctx = starsCanvas.getContext('2d');
+    // ═══════════════════════════════════════════
+    // STARS
+    // ═══════════════════════════════════════════
+    const sc = document.getElementById('stars');
+    const sx = sc.getContext('2d');
     let SW, SH;
-    function sResize() { SW = starsCanvas.width = window.innerWidth; SH = starsCanvas.height = window.innerHeight; }
-    sResize(); window.addEventListener('resize', sResize);
+    function sR() { SW = sc.width = innerWidth; SH = sc.height = innerHeight; }
+    sR(); addEventListener('resize', sR);
 
-    const stars = [];
-    for (let i = 0; i < 120; i++) {
-      stars.push({ x: Math.random() * 2000, y: Math.random() * 2000, r: Math.random() * 1.2 + 0.3, a: Math.random() * 0.6 + 0.2, p: Math.random() * Math.PI * 2 });
-    }
+    const stars = Array.from({length: 150}, () => ({
+      x: Math.random() * 3000, y: Math.random() * 3000,
+      r: Math.random() * 1.3 + 0.2, a: Math.random() * 0.5 + 0.15,
+      p: Math.random() * 6.28
+    }));
 
     function drawStars(t) {
-      sctx.clearRect(0, 0, SW, SH);
-      stars.forEach(s => {
-        const flicker = 0.5 + Math.sin(t * 0.001 + s.p) * 0.5;
-        sctx.beginPath();
-        sctx.arc(s.x % SW, s.y % SH, s.r, 0, Math.PI * 2);
-        sctx.fillStyle = `rgba(200, 220, 255, ${s.a * flicker})`;
-        sctx.fill();
-      });
+      sx.clearRect(0, 0, SW, SH);
+      for (const s of stars) {
+        const f = 0.4 + Math.sin(t * 0.0008 + s.p) * 0.6;
+        sx.beginPath();
+        sx.arc(s.x % SW, s.y % SH, s.r, 0, 6.28);
+        sx.fillStyle = `rgba(180,210,255,${s.a * f})`;
+        sx.fill();
+      }
       requestAnimationFrame(drawStars);
     }
     drawStars(0);
 
-    // Globe
-    const scene = document.getElementById('scene');
-    const sphere = document.getElementById('sphere');
-    const earth = document.getElementById('earth');
+    // ═══════════════════════════════════════════
+    // 3D GLOBE RENDERER
+    // ═══════════════════════════════════════════
+    const canvas = document.getElementById('globeCanvas');
+    const ctx = canvas.getContext('2d');
+    const globeEl = document.getElementById('globe');
+    const glowEl = document.getElementById('glow');
+    const atmoEl = document.getElementById('atmo');
     const progressBar = document.getElementById('progress');
+    const labelEl = document.getElementById('label');
 
-    const totalScroll = document.documentElement.scrollHeight - window.innerHeight;
-    let scrollY = 0;
-    let targetScrollY = 0;
+    const RADIUS = 200;
+    canvas.width = RADIUS * 2;
+    canvas.height = RADIUS * 2;
 
-    // Animation state
-    let globeY = window.innerHeight * 0.7;
-    let globeScale = 0.2;
-    let globeRotateY = 0;
-    let globeRotateX = 5;
-    let autoRotate = 0;
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.src = 'https://raw.githubusercontent.com/turban/webgl-earth/master/images/2_no_clouds_4k.jpg';
 
-    window.addEventListener('scroll', () => {
-      targetScrollY = window.scrollY;
-    }, { passive: true });
+    let imgLoaded = false;
+    let imgData = null;
+    let imgW = 0, imgH = 0;
+
+    img.onload = () => {
+      imgLoaded = true;
+      const c = document.createElement('canvas');
+      c.width = img.naturalWidth;
+      c.height = img.naturalHeight;
+      const cx = c.getContext('2d');
+      cx.drawImage(img, 0, 0);
+      imgData = cx.getImageData(0, 0, c.width, c.height).data;
+      imgW = c.width;
+      imgH = c.height;
+    };
+
+    function sampleTexture(u, v) {
+      u = ((u % 1) + 1) % 1;
+      v = Math.max(0, Math.min(1, v));
+      const x = Math.floor(u * (imgW - 1));
+      const y = Math.floor(v * (imgH - 1));
+      const i = (y * imgW + x) * 4;
+      return [imgData[i], imgData[i + 1], imgData[i + 2]];
+    }
+
+    function renderGlobe(rotY, rotX) {
+      if (!imgLoaded) return;
+
+      const w = canvas.width;
+      const h = canvas.height;
+      const cx = w / 2;
+      const cy = h / 2;
+      const r = RADIUS;
+
+      const imgDataOut = ctx.createImageData(w, h);
+      const data = imgDataOut.data;
+
+      const cosY = Math.cos(rotY);
+      const sinY = Math.sin(rotY);
+      const cosX = Math.cos(rotX);
+      const sinX = Math.sin(rotX);
+
+      const lightDir = [0.3, 0.5, 0.8];
+      const lLen = Math.sqrt(lightDir[0] ** 2 + lightDir[1] ** 2 + lightDir[2] ** 2);
+      lightDir[0] /= lLen; lightDir[1] /= lLen; lightDir[2] /= lLen;
+
+      for (let py = 0; py < h; py++) {
+        for (let px = 0; px < w; px++) {
+          const dx = px - cx;
+          const dy = py - cy;
+          const dist2 = dx * dx + dy * dy;
+
+          if (dist2 > r * r) continue;
+
+          const dz = Math.sqrt(r * r - dist2);
+          let nx = dx / r;
+          let ny = dy / r;
+          let nz = dz / r;
+
+          // Rotate around Y
+          const rx = nx * cosY + nz * sinY;
+          const ry = ny;
+          const rz = -nx * sinY + nz * cosY;
+
+          // Rotate around X
+          const fx = rx;
+          const fy = ry * cosX - rz * sinX;
+          const fz = ry * sinX + rz * cosX;
+
+          // UV mapping (equirectangular)
+          const u = Math.atan2(fx, fz) / (2 * Math.PI) + 0.5;
+          const v = Math.acos(Math.max(-1, Math.min(1, -fy))) / Math.PI;
+
+          const [cr, cg, cb] = sampleTexture(u, v);
+
+          // Lighting
+          const dot = nx * lightDir[0] + ny * lightDir[1] + nz * lightDir[2];
+          const light = Math.max(0, dot);
+          const ambient = 0.12;
+          const brightness = ambient + light * 0.88;
+
+          // Edge darkening (fresnel-like)
+          const edgeFade = nz;
+          const edgeFactor = Math.pow(Math.max(0, edgeFade), 0.4);
+
+          const idx = (py * w + px) * 4;
+          data[idx] = Math.min(255, cr * brightness * edgeFactor);
+          data[idx + 1] = Math.min(255, cg * brightness * edgeFactor);
+          data[idx + 2] = Math.min(255, cb * brightness * edgeFactor);
+          data[idx + 3] = 255;
+        }
+      }
+
+      ctx.putImageData(imgDataOut, 0, 0);
+    }
+
+    // ═══════════════════════════════════════════
+    // SCROLL ANIMATION
+    // ═══════════════════════════════════════════
+    const totalScroll = document.documentElement.scrollHeight - innerHeight;
+    let sTarget = 0;
+    let sCurrent = 0;
+
+    addEventListener('scroll', () => { sTarget = scrollY; }, { passive: true });
+
+    let globeScale = 0.15;
+    let globeTranslateY = innerHeight * 0.6;
+    let rotAngleY = 0;
+    let rotAngleX = 0.3;
 
     function lerp(a, b, t) { return a + (b - a) * t; }
 
     function animate() {
-      scrollY = lerp(scrollY, targetScrollY, 0.08);
-      const progress = scrollY / totalScroll;
+      sCurrent = lerp(sCurrent, sTarget, 0.06);
+      const p = Math.max(0, Math.min(1, sCurrent / totalScroll));
 
-      // Phase 1: 0 -> 0.35 — Globe rises from bottom (2x slower)
-      // Phase 2: 0.35 -> 0.6 — Globe stops, starts 3D rotation
-      // Phase 3: 0.6 -> 1.0 — Full 3D rotation, globe holds at center
+      // Phase 1: 0 -> 0.3 — Globe rises from bottom (2x slower)
+      // Phase 2: 0.3 -> 0.5 — Stops, expands slightly
+      // Phase 3: 0.5 -> 1.0 — Full 3D rotation at center
 
-      let targetY, targetScale, targetRotX;
+      let tY, tScale;
 
-      if (progress < 0.35) {
-        // Rising phase — 2x slower
-        const p = progress / 0.35;
-        const eased = 1 - Math.pow(1 - p, 2);
-
-        targetY = lerp(window.innerHeight * 0.7, 0, eased);
-        targetScale = lerp(0.2, 1, eased);
-        targetRotX = 5;
-
-      } else if (progress < 0.6) {
-        // Transition — stop and start rotating
-        const p = (progress - 0.35) / 0.25;
-
-        targetY = 0;
-        targetScale = lerp(1, 1.1, p);
-        targetRotX = lerp(5, 0, p);
-
+      if (p < 0.3) {
+        const ep = 1 - Math.pow(1 - p / 0.3, 3);
+        tY = lerp(innerHeight * 0.6, 0, ep);
+        tScale = lerp(0.15, 1, ep);
+      } else if (p < 0.5) {
+        const ep = (p - 0.3) / 0.2;
+        tY = 0;
+        tScale = lerp(1, 1.05, ep);
       } else {
-        // Full rotation
-        const p = (progress - 0.6) / 0.4;
-        const pulse = Math.sin(p * Math.PI * 6) * 0.02;
-
-        targetY = 0;
-        targetScale = 1.1 + pulse;
-        targetRotX = 0;
+        const ep = (p - 0.5) / 0.5;
+        tY = 0;
+        tScale = 1.05 + Math.sin(ep * Math.PI * 4) * 0.015;
       }
 
-      // Smooth interpolation
-      globeY = lerp(globeY, targetY, 0.1);
-      globeScale = lerp(globeScale, targetScale, 0.1);
-      globeRotateX = lerp(globeRotateX, targetRotX, 0.1);
+      globeTranslateY = lerp(globeTranslateY, tY, 0.08);
+      globeScale = lerp(globeScale, tScale, 0.08);
 
-      // Auto-rotate increases with scroll
-      if (progress > 0.35) {
-        autoRotate += 0.3 + (progress - 0.35) * 2;
+      // Rotation: scroll-driven + auto
+      const scrollRot = p * Math.PI * 4;
+      const autoRot = performance.now() * 0.00015;
+      rotAngleY = scrollRot + autoRot;
+
+      // Slight tilt
+      if (p > 0.3) {
+        rotAngleX = lerp(rotAngleX, 0.25, 0.02);
       } else {
-        autoRotate += 0.05;
+        rotAngleX = lerp(rotAngleX, 0.5, 0.02);
       }
 
-      // Scroll-driven rotation
-      const scrollRotation = progress * 360 * 2;
+      // Apply
+      globeEl.style.transform = `translate(-50%, calc(-50% + ${globeTranslateY}px)) scale(${globeScale})`;
 
-      // Apply 3D transforms
-      const rotY = autoRotate + scrollRotation;
-      const rotX = globeRotateX + Math.sin(autoRotate * 0.01) * 3;
+      const diam = RADIUS * 2;
+      glowEl.style.width = `${diam + 80}px`;
+      glowEl.style.height = `${diam + 80}px`;
+      atmoEl.style.width = `${diam + 16}px`;
+      atmoEl.style.height = `${diam + 16}px`;
 
-      scene.style.transform = `translateY(${globeY}px) scale(${globeScale})`;
-      sphere.style.transform = `rotateY(${rotY}deg) rotateX(${rotX}deg)`;
+      progressBar.style.width = `${p * 100}%`;
+      labelEl.style.opacity = p < 0.05 ? 1 : Math.max(0, 1 - (p - 0.05) * 10);
 
-      // Image offset for continuous scroll illusion
-      const imgOffset = (rotY % 360) / 360 * 40;
-      earth.style.left = `${-20 - imgOffset}%`;
-
-      progressBar.style.width = `${progress * 100}%`;
+      // Render sphere
+      renderGlobe(rotAngleY, rotAngleX);
 
       requestAnimationFrame(animate);
     }
