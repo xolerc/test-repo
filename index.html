@@ -188,7 +188,7 @@
     let mx = window.innerWidth / 2, my = window.innerHeight / 2;
     let cx = mx, cy = my;
     let targetR = 0, currentR = 0, active = false, lastTouchTime = 0;
-    let currentEffect = 0;
+    let currentEffect = 19;
     const CIRCLE_SIZE = 200, CIRCLE_SIZE_MOBILE = 140;
 
     let fxW, fxH;
@@ -607,7 +607,8 @@
     const dotsEl = document.getElementById('effectDots');
     const nameEl = document.getElementById('effectName');
     const counterEl = document.getElementById('effectCounter');
-    EFFECTS.forEach((_, i) => { const d = document.createElement('span'); if (i === 0) d.classList.add('active'); dotsEl.appendChild(d); });
+    EFFECTS.forEach((_, i) => { const d = document.createElement('span'); if (i === currentEffect) d.classList.add('active'); dotsEl.appendChild(d); });
+    updateNav();
 
     function updateNav() {
       nameEl.textContent = EFFECTS[currentEffect].name;
