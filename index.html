@@ -3,12 +3,12 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Globe Scroll Effect</title>
+  <title>3D Globe</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
 
     html {
-      height: 500vh;
+      height: 400vh;
       background: #000;
     }
 
@@ -17,296 +17,215 @@
       top: 0; left: 0;
       width: 100%; height: 100%;
       overflow: hidden;
-      background: #000;
+      background: radial-gradient(ellipse at center, #0a0a1a 0%, #000 100%);
       display: flex;
       align-items: center;
       justify-content: center;
+      perspective: 1200px;
     }
 
-    .globe-wrapper {
+    .globe-scene {
       position: relative;
-      width: 500px;
-      height: 500px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .globe {
       width: 400px;
       height: 400px;
-      border-radius: 50%;
-      overflow: hidden;
-      position: relative;
-      transition: border-radius 0.1s ease, box-shadow 0.1s ease;
-      will-change: transform, border-radius, clip-path;
+      transform-style: preserve-3d;
     }
 
-    .globe img {
+    .globe-sphere {
       width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      position: relative;
+      transform-style: preserve-3d;
+      overflow: hidden;
+    }
+
+    .globe-sphere img {
+      width: 140%;
       height: 100%;
       object-fit: cover;
       position: absolute;
       top: 0;
-      left: 0;
-      will-change: transform;
+      left: -20%;
+      transform-origin: center center;
     }
 
-    .globe-glow {
+    .globe-shadow {
       position: absolute;
-      top: -20px; left: -20px;
-      right: -20px; bottom: -20px;
-      border-radius: 50%;
-      background: radial-gradient(circle, rgba(0, 100, 255, 0.15) 0%, transparent 70%);
-      pointer-events: none;
-      opacity: 0;
-      transition: opacity 0.3s ease;
-    }
-
-    .atmosphere {
-      position: absolute;
-      top: -3px; left: -3px;
-      right: -3px; bottom: -3px;
-      border-radius: 50%;
-      background: radial-gradient(circle at 30% 30%, rgba(100, 180, 255, 0.2), transparent 60%);
-      pointer-events: none;
-      opacity: 0;
-    }
-
-    .info {
-      position: fixed;
-      bottom: 40px;
+      bottom: -60px;
       left: 50%;
       transform: translateX(-50%);
-      color: rgba(255,255,255,0.4);
-      font-family: 'SF Mono', 'Fira Code', monospace;
-      font-size: 12px;
-      letter-spacing: 3px;
-      text-transform: uppercase;
-      z-index: 10;
-      animation: fadeInUp 1s ease 0.5s both;
-    }
-
-    @keyframes fadeInUp {
-      from { opacity: 0; transform: translateX(-50%) translateY(20px); }
-      to { opacity: 1; transform: translateX(-50%) translateY(0); }
-    }
-
-    .scroll-indicator {
-      position: fixed;
-      bottom: 70px;
-      left: 50%;
-      transform: translateX(-50%);
-      width: 24px;
+      width: 300px;
       height: 40px;
-      border: 2px solid rgba(255,255,255,0.2);
-      border-radius: 12px;
-      z-index: 10;
-      animation: fadeInUp 1s ease 0.8s both;
+      background: radial-gradient(ellipse, rgba(0,100,255,0.2) 0%, transparent 70%);
+      border-radius: 50%;
+      filter: blur(10px);
     }
 
-    .scroll-indicator::after {
-      content: '';
+    .globe-atmosphere {
       position: absolute;
-      top: 8px;
-      left: 50%;
-      transform: translateX(-50%);
-      width: 3px;
-      height: 8px;
-      background: rgba(255,255,255,0.4);
-      border-radius: 2px;
-      animation: scrollDot 1.5s ease-in-out infinite;
+      top: -8px; left: -8px;
+      right: -8px; bottom: -8px;
+      border-radius: 50%;
+      background: radial-gradient(circle at 35% 35%, rgba(80,160,255,0.15), transparent 50%);
+      pointer-events: none;
     }
 
-    @keyframes scrollDot {
-      0%, 100% { top: 8px; opacity: 1; }
-      50% { top: 20px; opacity: 0.3; }
-    }
-
-    .progress-bar {
-      position: fixed;
-      top: 0; left: 0;
-      height: 2px;
-      background: linear-gradient(90deg, #0066ff, #00ccff);
-      z-index: 100;
-      transition: width 0.1s ease;
-    }
-
-    .bg-particles {
+    .stars {
       position: fixed;
       top: 0; left: 0;
       width: 100%; height: 100%;
       pointer-events: none;
-      z-index: 0;
+    }
+
+    .progress {
+      position: fixed;
+      top: 0; left: 0;
+      height: 2px;
+      background: linear-gradient(90deg, #0066ff, #00ccff, #0066ff);
+      z-index: 100;
+      width: 0%;
+    }
+
+    .label {
+      position: fixed;
+      bottom: 50px;
+      left: 50%;
+      transform: translateX(-50%);
+      color: rgba(255,255,255,0.3);
+      font-family: 'SF Mono', monospace;
+      font-size: 11px;
+      letter-spacing: 4px;
+      text-transform: uppercase;
+      z-index: 10;
     }
   </style>
 </head>
 <body>
-  <canvas class="bg-particles" id="bgParticles"></canvas>
-  <div class="progress-bar" id="progressBar"></div>
+  <canvas class="stars" id="stars"></canvas>
+  <div class="progress" id="progress"></div>
 
-  <div class="globe-wrapper" id="globeWrapper">
-    <div class="globe-glow" id="globeGlow"></div>
-    <div class="atmosphere" id="atmosphere"></div>
-    <div class="globe" id="globe">
-      <img id="earthImg" src="https://raw.githubusercontent.com/turban/webgl-earth/master/images/2_no_clouds_4k.jpg" alt="Earth" crossorigin="anonymous">
+  <div class="globe-scene" id="scene">
+    <div class="globe-atmosphere"></div>
+    <div class="globe-sphere" id="sphere">
+      <img id="earth" src="https://raw.githubusercontent.com/turban/webgl-earth/master/images/2_no_clouds_4k.jpg" alt="Earth">
     </div>
+    <div class="globe-shadow"></div>
   </div>
 
-  <div class="scroll-indicator" id="scrollIndicator"></div>
-  <div class="info" id="info">scroll to explore</div>
+  <div class="label">scroll to rotate</div>
 
   <script>
-    // ═══════════════════════════════════════════
-    // BACKGROUND PARTICLES
-    // ═══════════════════════════════════════════
-    const bgCanvas = document.getElementById('bgParticles');
-    const bgCtx = bgCanvas.getContext('2d');
-    let BGW, BGH;
+    // Stars
+    const starsCanvas = document.getElementById('stars');
+    const sctx = starsCanvas.getContext('2d');
+    let SW, SH;
+    function sResize() { SW = starsCanvas.width = window.innerWidth; SH = starsCanvas.height = window.innerHeight; }
+    sResize(); window.addEventListener('resize', sResize);
 
-    function bgResize() {
-      BGW = bgCanvas.width = window.innerWidth;
-      BGH = bgCanvas.height = window.innerHeight;
+    const stars = [];
+    for (let i = 0; i < 120; i++) {
+      stars.push({ x: Math.random() * 2000, y: Math.random() * 2000, r: Math.random() * 1.2 + 0.3, a: Math.random() * 0.6 + 0.2, p: Math.random() * Math.PI * 2 });
     }
-    bgResize();
-    window.addEventListener('resize', bgResize);
 
-    const bgStars = [];
-    for (let i = 0; i < 80; i++) {
-      bgStars.push({
-        x: Math.random() * window.innerWidth,
-        y: Math.random() * window.innerHeight,
-        size: Math.random() * 1.5 + 0.5,
-        alpha: Math.random() * 0.5 + 0.2,
-        speed: Math.random() * 0.0005 + 0.0002,
-        phase: Math.random() * Math.PI * 2
+    function drawStars(t) {
+      sctx.clearRect(0, 0, SW, SH);
+      stars.forEach(s => {
+        const flicker = 0.5 + Math.sin(t * 0.001 + s.p) * 0.5;
+        sctx.beginPath();
+        sctx.arc(s.x % SW, s.y % SH, s.r, 0, Math.PI * 2);
+        sctx.fillStyle = `rgba(200, 220, 255, ${s.a * flicker})`;
+        sctx.fill();
       });
+      requestAnimationFrame(drawStars);
     }
+    drawStars(0);
 
-    function drawBgParticles(t) {
-      bgCtx.clearRect(0, 0, BGW, BGH);
-      bgStars.forEach(s => {
-        const flicker = 0.5 + Math.sin(t * s.speed + s.phase) * 0.5;
-        bgCtx.beginPath();
-        bgCtx.arc(s.x, s.y, s.size, 0, Math.PI * 2);
-        bgCtx.fillStyle = `rgba(180, 200, 255, ${s.alpha * flicker})`;
-        bgCtx.fill();
-      });
-      requestAnimationFrame(drawBgParticles);
-    }
-    drawBgParticles(0);
-
-    // ═══════════════════════════════════════════
-    // GLOBE SCROLL ANIMATION
-    // ═══════════════════════════════════════════
-    const globe = document.getElementById('globe');
-    const globeWrapper = document.getElementById('globeWrapper');
-    const earthImg = document.getElementById('earthImg');
-    const globeGlow = document.getElementById('globeGlow');
-    const atmosphere = document.getElementById('atmosphere');
-    const progressBar = document.getElementById('progressBar');
-    const scrollIndicator = document.getElementById('scrollIndicator');
-    const infoEl = document.getElementById('info');
+    // Globe
+    const scene = document.getElementById('scene');
+    const sphere = document.getElementById('sphere');
+    const earth = document.getElementById('earth');
+    const progressBar = document.getElementById('progress');
 
     const totalScroll = document.documentElement.scrollHeight - window.innerHeight;
-    let scrollProgress = 0;
-    let targetProgress = 0;
+    let scrollY = 0;
+    let targetScrollY = 0;
 
-    let imgRotation = 0;
-    let currentScale = 0.3;
-    let currentY = window.innerHeight * 0.8;
-    let currentSkew = 0;
-    let currentBorderRadius = 50;
+    // Animation state
+    let globeY = window.innerHeight * 0.7;
+    let globeScale = 0.2;
+    let globeRotateY = 0;
+    let globeRotateX = 5;
+    let autoRotate = 0;
+
+    window.addEventListener('scroll', () => {
+      targetScrollY = window.scrollY;
+    }, { passive: true });
 
     function lerp(a, b, t) { return a + (b - a) * t; }
 
-    window.addEventListener('scroll', () => {
-      targetProgress = window.scrollY / totalScroll;
-    }, { passive: true });
-
     function animate() {
-      scrollProgress = lerp(scrollProgress, targetProgress, 0.08);
+      scrollY = lerp(scrollY, targetScrollY, 0.08);
+      const progress = scrollY / totalScroll;
 
-      const progress = scrollProgress;
-      const centerX = window.innerWidth / 2;
-      const centerY = window.innerHeight / 2;
+      // Phase 1: 0 -> 0.35 — Globe rises from bottom (2x slower)
+      // Phase 2: 0.35 -> 0.6 — Globe stops, starts 3D rotation
+      // Phase 3: 0.6 -> 1.0 — Full 3D rotation, globe holds at center
 
-      // Phase 1: Scroll up from bottom (0 -> 0.4)
-      // Phase 2: Stop at center, morph (0.4 -> 0.7)
-      // Phase 3: Hold at center (0.7 -> 1.0)
+      let targetY, targetScale, targetRotX;
 
-      let translateY, scale, borderRadiusVal, glowAlpha, atmAlpha, imgOffset;
-      let skewAngle = 0;
+      if (progress < 0.35) {
+        // Rising phase — 2x slower
+        const p = progress / 0.35;
+        const eased = 1 - Math.pow(1 - p, 2);
 
-      if (progress < 0.4) {
-        // Rising phase: globe comes up from bottom, 2x slower
-        const p = progress / 0.4;
-        const eased = 1 - Math.pow(1 - p, 3);
+        targetY = lerp(window.innerHeight * 0.7, 0, eased);
+        targetScale = lerp(0.2, 1, eased);
+        targetRotX = 5;
 
-        translateY = lerp(window.innerHeight * 0.6, 0, eased);
-        scale = lerp(0.3, 1, eased);
-        borderRadiusVal = 50;
-        glowAlpha = 0;
-        atmAlpha = 0;
-        imgOffset = 0;
-        skewAngle = 0;
+      } else if (progress < 0.6) {
+        // Transition — stop and start rotating
+        const p = (progress - 0.35) / 0.25;
 
-        scrollIndicator.style.opacity = 1;
-        infoEl.style.opacity = 1;
-
-      } else if (progress < 0.7) {
-        // Morph phase: globe transforms at center
-        const p = (progress - 0.4) / 0.3;
-        const eased = p;
-
-        translateY = 0;
-        scale = lerp(1, 1.15, eased);
-
-        // Shape morph: circle -> rounded square -> back to circle
-        if (p < 0.5) {
-          borderRadiusVal = lerp(50, 20, p * 2);
-        } else {
-          borderRadiusVal = lerp(20, 50, (p - 0.5) * 2);
-        }
-
-        glowAlpha = lerp(0, 1, eased);
-        atmAlpha = lerp(0, 1, eased);
-        imgOffset = eased * 30;
-        skewAngle = Math.sin(p * Math.PI) * 5;
-
-        scrollIndicator.style.opacity = 0;
-        infoEl.textContent = 'xoleric';
-        infoEl.style.opacity = 1;
+        targetY = 0;
+        targetScale = lerp(1, 1.1, p);
+        targetRotX = lerp(5, 0, p);
 
       } else {
-        // Hold phase: globe stays at center, slight pulse
-        const p = (progress - 0.7) / 0.3;
-        const pulse = Math.sin(p * Math.PI * 4) * 0.03;
+        // Full rotation
+        const p = (progress - 0.6) / 0.4;
+        const pulse = Math.sin(p * Math.PI * 6) * 0.02;
 
-        translateY = 0;
-        scale = 1.15 + pulse;
-        borderRadiusVal = 50;
-        glowAlpha = 1;
-        atmAlpha = 1;
-        imgOffset = 30;
-        skewAngle = 0;
-
-        scrollIndicator.style.opacity = 0;
+        targetY = 0;
+        targetScale = 1.1 + pulse;
+        targetRotX = 0;
       }
 
-      // Apply transforms
-      imgRotation += 0.15;
+      // Smooth interpolation
+      globeY = lerp(globeY, targetY, 0.1);
+      globeScale = lerp(globeScale, targetScale, 0.1);
+      globeRotateX = lerp(globeRotateX, targetRotX, 0.1);
 
-      globe.style.transform = `scale(${scale}) skewY(${skewAngle}deg)`;
-      globe.style.borderRadius = `${borderRadiusVal}%`;
+      // Auto-rotate increases with scroll
+      if (progress > 0.35) {
+        autoRotate += 0.3 + (progress - 0.35) * 2;
+      } else {
+        autoRotate += 0.05;
+      }
 
-      earthImg.style.transform = `translateX(${-imgOffset + Math.sin(imgRotation * 0.01) * 5}px) rotate(${imgRotation * 0.1}deg)`;
+      // Scroll-driven rotation
+      const scrollRotation = progress * 360 * 2;
 
-      globeGlow.style.opacity = glowAlpha;
-      globeGlow.style.transform = `scale(${1 + glowAlpha * 0.2})`;
+      // Apply 3D transforms
+      const rotY = autoRotate + scrollRotation;
+      const rotX = globeRotateX + Math.sin(autoRotate * 0.01) * 3;
 
-      atmosphere.style.opacity = atmAlpha;
-      atmosphere.style.transform = `scale(${1 + atmAlpha * 0.1})`;
+      scene.style.transform = `translateY(${globeY}px) scale(${globeScale})`;
+      sphere.style.transform = `rotateY(${rotY}deg) rotateX(${rotX}deg)`;
+
+      // Image offset for continuous scroll illusion
+      const imgOffset = (rotY % 360) / 360 * 40;
+      earth.style.left = `${-20 - imgOffset}%`;
 
       progressBar.style.width = `${progress * 100}%`;
 
