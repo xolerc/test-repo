@@ -2,821 +2,318 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>xoleric</title>
-  <link rel="icon" type="image/png" href="https://i.ibb.co/1YkVGcLr/file-000000006dac7246bdc26b703d4174a7.png">
-  <link rel="apple-touch-icon" href="https://i.ibb.co/1YkVGcLr/file-000000006dac7246bdc26b703d4174a7.png">
-  <meta name="description" content="Assalomu alaykum! Men zamonaviy va innovatsion veb-ilovalarni yaratishga ixtisoslashgan Frontend dasturchiman." />
-  <meta property="og:site_name" content="xoleric" />
-  <meta property="og:title" content="xoleric - Frontend Developer" />
-  <meta property="og:description" content="Zamonaviy va innovatsion veb-ilomalar yaratuvchi Frontend dasturchi." />
-  <meta property="og:image" content="https://i.ibb.co/1YkVGcLr/file-000000006dac7246bdc26b703d4174a7.png" />
-  <meta property="og:url" content="https://xolerc.github.io/mydrime/" />
-  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Globe Scroll Effect</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    html, body { width: 100%; height: 100%; overflow: hidden; background: #000; font-family: sans-serif; }
-    body { cursor: none; }
 
-    .scene { position: fixed; top: 0; left: 0; width: 100%; height: 100%; }
-    .layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-size: cover; background-position: center; background-repeat: no-repeat; }
-    .layer-bg { background-image: url('images/bg.png'); z-index: 1; }
-    .layer-main { background-image: url('images/main.png'); z-index: 2; }
-
-    .reveal {
-      position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-      z-index: 3; pointer-events: none;
-      background-image: url('images/bg.png');
-      background-size: cover;
-      background-position: -45px center;
-      mask-image: radial-gradient(circle 0px at 50% 50%, black 0%, transparent 100%);
-      -webkit-mask-image: radial-gradient(circle 0px at 50% 50%, black 0%, transparent 100%);
-      transition: filter 0.4s ease;
+    html {
+      height: 500vh;
+      background: #000;
     }
 
-    canvas#particles { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 4; pointer-events: none; }
-    canvas#fx { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 5; pointer-events: none; }
-
-    .cursor-dot {
-      position: fixed; width: 6px; height: 6px; border-radius: 50%;
-      background: rgba(255,255,255,0.9); pointer-events: none; z-index: 10;
-      transform: translate(-50%, -50%);
-      box-shadow: 0 0 12px rgba(255,255,255,0.6);
+    body {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      overflow: hidden;
+      background: #000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
 
-    canvas#lightning { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 9; pointer-events: none; }
+    .globe-wrapper {
+      position: relative;
+      width: 500px;
+      height: 500px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
 
-    .welcome {
-      position: fixed; bottom: 95px; left: 40%; transform: translateX(-50%); z-index: 10;
-      font-size: 2.5vw; font-weight: 900; text-transform: uppercase;
-      display: flex; flex-wrap: wrap; justify-content: center;
-      letter-spacing: 4px; text-align: center; white-space: nowrap;
-      font-family: 'Arial Black', Impact, sans-serif;
+    .globe {
+      width: 400px;
+      height: 400px;
+      border-radius: 50%;
+      overflow: hidden;
+      position: relative;
+      transition: border-radius 0.1s ease, box-shadow 0.1s ease;
+      will-change: transform, border-radius, clip-path;
     }
-    .welcome .letter {
-      display: inline-block; color: rgba(230, 230, 230, 0.9); opacity: 0;
-      transform: translateY(30px) scale(0.8) rotateX(-45deg);
-      transition: opacity 0.6s ease, transform 0.8s cubic-bezier(0.2, 0.8, 0.2, 1);
-      white-space: pre;
-      text-shadow: 0 0 10px rgba(0, 255, 255, 0), 0 0 20px rgba(0, 255, 255, 0);
-    }
-    .welcome .letter.visible {
-      opacity: 1; transform: translateY(0) scale(1) rotateX(0);
-      animation: softGlow 3s infinite alternate ease-in-out;
-      transition: transform 0.4s cubic-bezier(0.23, 1, 0.32, 1), text-shadow 0.4s ease, color 0.4s ease;
-      will-change: transform, text-shadow;
-    }
-    @keyframes softGlow {
-      0% { text-shadow: 0 0 10px rgba(74, 144, 226, 0.3), 0 0 20px rgba(74, 144, 226, 0.1); }
-      100% { text-shadow: 0 0 20px rgba(74, 144, 226, 0.6), 0 0 40px rgba(74, 144, 226, 0.3); }
-    }
-    @media (max-width: 768px) { .welcome { font-size: 8vw; } }
 
-    .orbit-container { position: fixed; top: 120px; right: 160px; width: 0; height: 0; z-index: 10; pointer-events: none; }
-    .orbit-ring { position: absolute; top: 0; left: 0; width: 400px; height: 400px; margin-top: -200px; margin-left: -200px; animation: orbitSpin 45s linear infinite; }
-    @keyframes orbitSpin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-    .orbit-ring .social-icon {
-      position: absolute; width: 38px; height: 38px; display: flex; align-items: center; justify-content: center;
-      border-radius: 50%; background: rgba(255,255,255,0.1); backdrop-filter: blur(10px);
-      border: 1px solid rgba(255,255,255,0.2); pointer-events: auto; cursor: none;
-      transition: background 0.3s, filter 0.3s;
+    .globe img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      position: absolute;
+      top: 0;
+      left: 0;
+      will-change: transform;
     }
-    .orbit-ring .social-icon:hover { background: rgba(255,255,255,0.25); filter: scale(1.2); }
-    .orbit-ring .social-icon svg { width: 18px; height: 18px; fill: #e10600; }
-    .social-icon { position: absolute; top: 50%; left: 50%; }
-    .social-icon:nth-child(1) { transform: rotate(0deg) translateX(200px) rotate(0deg); }
-    .social-icon:nth-child(2) { transform: rotate(60deg) translateX(200px) rotate(-60deg); }
-    .social-icon:nth-child(3) { transform: rotate(120deg) translateX(200px) rotate(-120deg); }
-    .social-icon:nth-child(4) { transform: rotate(180deg) translateX(200px) rotate(-180deg); }
-    .social-icon:nth-child(5) { transform: rotate(240deg) translateX(200px) rotate(-240deg); }
-    .social-icon:nth-child(6) { transform: rotate(300deg) translateX(200px) rotate(-300deg); }
-    .social-icon:nth-child(1), .social-icon:nth-child(2), .social-icon:nth-child(3),
-    .social-icon:nth-child(4), .social-icon:nth-child(5), .social-icon:nth-child(6) { margin-top: -19px; margin-left: -19px; }
 
-    .scroll-hint { position: fixed; bottom: 110px; left: 50%; transform: translateX(-50%); z-index: 10; display: none; flex-direction: column; align-items: center; gap: 8px; color: rgba(255,255,255,0.5); font-size: 12px; letter-spacing: 2px; text-transform: uppercase; animation: pulse 2s ease-in-out infinite; }
-    .scroll-hint svg { width: 20px; height: 20px; fill: none; stroke: rgba(255,255,255,0.5); stroke-width: 2; animation: bounce 2s ease-in-out infinite; }
-    @keyframes pulse { 0%, 100% { opacity: 0.4; } 50% { opacity: 1; } }
-    @keyframes bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(6px); } }
+    .globe-glow {
+      position: absolute;
+      top: -20px; left: -20px;
+      right: -20px; bottom: -20px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(0, 100, 255, 0.15) 0%, transparent 70%);
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
 
-    /* NAV */
-    .effect-nav {
-      position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%);
-      display: flex; align-items: center; gap: 16px; z-index: 100; pointer-events: none;
+    .atmosphere {
+      position: absolute;
+      top: -3px; left: -3px;
+      right: -3px; bottom: -3px;
+      border-radius: 50%;
+      background: radial-gradient(circle at 30% 30%, rgba(100, 180, 255, 0.2), transparent 60%);
+      pointer-events: none;
+      opacity: 0;
     }
-    .effect-nav button {
-      pointer-events: auto; cursor: none;
-      width: 44px; height: 44px; border: 1px solid rgba(255,255,255,0.2);
-      background: rgba(255,255,255,0.04); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
-      color: rgba(255,255,255,0.7); font-size: 18px; border-radius: 12px;
-      display: flex; align-items: center; justify-content: center;
-      transition: all 0.3s cubic-bezier(0.23, 1, 0.32, 1); user-select: none;
-    }
-    .effect-nav button:hover { background: rgba(255,255,255,0.12); border-color: rgba(255,255,255,0.4); color: #fff; transform: scale(1.08); }
-    .effect-nav button:active { transform: scale(0.95); }
-    .effect-label { pointer-events: none; display: flex; flex-direction: column; align-items: center; gap: 4px; min-width: 180px; }
-    .effect-name { color: rgba(255,255,255,0.85); font-size: 13px; font-weight: 600; letter-spacing: 1.5px; text-transform: uppercase; font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace; white-space: nowrap; transition: opacity 0.3s ease; }
-    .effect-counter { color: rgba(255,255,255,0.3); font-size: 11px; font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace; letter-spacing: 2px; }
-    .effect-dots { display: flex; gap: 5px; margin-top: 2px; }
-    .effect-dots span { width: 4px; height: 4px; border-radius: 50%; background: rgba(255,255,255,0.15); transition: all 0.4s ease; }
-    .effect-dots span.active { background: rgba(255,255,255,0.8); box-shadow: 0 0 8px rgba(255,255,255,0.4); transform: scale(1.3); }
 
-    @media (max-width: 768px) {
-      .cursor-dot { display: none; } body { cursor: auto; }
-      .orbit-ring .social-icon { cursor: pointer; }
-      .scroll-hint { display: flex; }
-      .orbit-ring { width: 160px; height: 160px; margin-top: -80px; margin-left: -80px; }
-      .social-icon:nth-child(1) { transform: rotate(0deg) translateX(80px) rotate(0deg); }
-      .social-icon:nth-child(2) { transform: rotate(60deg) translateX(80px) rotate(-60deg); }
-      .social-icon:nth-child(3) { transform: rotate(120deg) translateX(80px) rotate(-120deg); }
-      .social-icon:nth-child(4) { transform: rotate(180deg) translateX(80px) rotate(-180deg); }
-      .social-icon:nth-child(5) { transform: rotate(240deg) translateX(80px) rotate(-240deg); }
-      .social-icon:nth-child(6) { transform: rotate(300deg) translateX(80px) rotate(-300deg); }
-      .effect-nav button { cursor: pointer; } .effect-nav { bottom: 16px; gap: 10px; }
-      .effect-nav button { width: 38px; height: 38px; font-size: 16px; }
-      .effect-name { font-size: 11px; min-width: 140px; }
+    .info {
+      position: fixed;
+      bottom: 40px;
+      left: 50%;
+      transform: translateX(-50%);
+      color: rgba(255,255,255,0.4);
+      font-family: 'SF Mono', 'Fira Code', monospace;
+      font-size: 12px;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      z-index: 10;
+      animation: fadeInUp 1s ease 0.5s both;
     }
-    @media (min-width: 769px) { .scroll-hint { display: none; } }
+
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateX(-50%) translateY(20px); }
+      to { opacity: 1; transform: translateX(-50%) translateY(0); }
+    }
+
+    .scroll-indicator {
+      position: fixed;
+      bottom: 70px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 24px;
+      height: 40px;
+      border: 2px solid rgba(255,255,255,0.2);
+      border-radius: 12px;
+      z-index: 10;
+      animation: fadeInUp 1s ease 0.8s both;
+    }
+
+    .scroll-indicator::after {
+      content: '';
+      position: absolute;
+      top: 8px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 3px;
+      height: 8px;
+      background: rgba(255,255,255,0.4);
+      border-radius: 2px;
+      animation: scrollDot 1.5s ease-in-out infinite;
+    }
+
+    @keyframes scrollDot {
+      0%, 100% { top: 8px; opacity: 1; }
+      50% { top: 20px; opacity: 0.3; }
+    }
+
+    .progress-bar {
+      position: fixed;
+      top: 0; left: 0;
+      height: 2px;
+      background: linear-gradient(90deg, #0066ff, #00ccff);
+      z-index: 100;
+      transition: width 0.1s ease;
+    }
+
+    .bg-particles {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      pointer-events: none;
+      z-index: 0;
+    }
   </style>
 </head>
 <body>
-  <div class="scene">
-    <div class="layer layer-bg"></div>
-    <div class="layer layer-main"></div>
-    <div class="reveal" id="reveal"></div>
-  </div>
+  <canvas class="bg-particles" id="bgParticles"></canvas>
+  <div class="progress-bar" id="progressBar"></div>
 
-  <div class="cursor-dot" id="dot"></div>
-  <canvas id="lightning"></canvas>
-  <canvas id="particles"></canvas>
-  <canvas id="fx"></canvas>
-
-  <div class="welcome" id="welcome"></div>
-
-  <div class="orbit-container">
-    <div class="orbit-ring">
-      <a class="social-icon" href="https://youtube.com/@xolericc" target="_blank" rel="noopener"><svg viewBox="0 0 24 24"><path d="M23.498 6.186a3.016 3.016 0 00-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 00.502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 002.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 002.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg></a>
-      <a class="social-icon" href="https://www.instagram.com/xoleric_" target="_blank" rel="noopener"><svg viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/></svg></a>
-      <a class="social-icon" href="https://t.me/Wxoleric" target="_blank" rel="noopener"><svg viewBox="0 0 24 24"><path d="M11.944 0A12 12 0 000 12a12 12 0 0012 12 12 12 0 0012-12A12 12 0 0012 0a12 12 0 00-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 01.171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.479.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/></svg></a>
-      <a class="social-icon" href="https://github.com/xolerc" target="_blank" rel="noopener"><svg viewBox="0 0 24 24"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg></a>
-      <a class="social-icon" href="https://pin.it/2BCXGGCba" target="_blank" rel="noopener"><svg viewBox="0 0 24 24"><path d="M12.017 0C5.396 0 .029 5.367.029 11.987c0 5.079 3.158 9.417 7.618 11.162-.105-.949-.199-2.403.041-3.439.219-.937 1.406-5.957 1.406-5.957s-.359-.72-.359-1.781c0-1.668.967-2.914 2.171-2.914 1.023 0 1.518.769 1.518 1.69 0 1.029-.655 2.568-.994 3.995-.283 1.194.599 2.169 1.777 2.169 2.133 0 3.772-2.249 3.772-5.495 0-2.873-2.064-4.882-5.012-4.882-3.414 0-5.418 2.561-5.418 5.207 0 1.031.397 2.138.893 2.738a.36.36 0 01.083.345l-.333 1.36c-.053.22-.174.267-.402.161-1.499-.698-2.436-2.889-2.436-4.649 0-3.785 2.75-7.262 7.929-7.262 4.163 0 7.398 2.967 7.398 6.931 0 4.136-2.607 7.464-6.227 7.464-1.216 0-2.359-.631-2.75-1.378l-.748 2.853c-.271 1.043-1.002 2.35-1.492 3.146C9.57 23.812 10.763 24 12.017 24c6.624 0 11.99-5.367 11.99-11.988C24.007 5.367 18.641 0 12.017 0z"/></svg></a>
-      <a class="social-icon" href="https://www.linkedin.com/in/xoleric-undefined-8b689b3a1" target="_blank" rel="noopener"><svg viewBox="0 0 24 24"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg></a>
+  <div class="globe-wrapper" id="globeWrapper">
+    <div class="globe-glow" id="globeGlow"></div>
+    <div class="atmosphere" id="atmosphere"></div>
+    <div class="globe" id="globe">
+      <img id="earthImg" src="https://raw.githubusercontent.com/turban/webgl-earth/master/images/2_no_clouds_4k.jpg" alt="Earth" crossorigin="anonymous">
     </div>
   </div>
 
-  <div class="scroll-hint" id="scrollHint">
-    <span>TEGING</span>
-    <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12l7 7 7-7"/></svg>
-  </div>
-
-  <div class="effect-nav" id="effectNav">
-    <button id="prevBtn" aria-label="Prev">&#8592;</button>
-    <div class="effect-label">
-      <span class="effect-counter" id="effectCounter">1 / 20</span>
-      <span class="effect-name" id="effectName"></span>
-      <div class="effect-dots" id="effectDots"></div>
-    </div>
-    <button id="nextBtn" aria-label="Next">&#8594;</button>
-  </div>
+  <div class="scroll-indicator" id="scrollIndicator"></div>
+  <div class="info" id="info">scroll to explore</div>
 
   <script>
-    const reveal = document.getElementById('reveal');
-    const dot = document.getElementById('dot');
-    const fxCanvas = document.getElementById('fx');
-    const fctx = fxCanvas.getContext('2d');
-    const isMobile = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
-
-    let mx = window.innerWidth / 2, my = window.innerHeight / 2;
-    let cx = mx, cy = my;
-    let targetR = 0, currentR = 0, active = false, lastTouchTime = 0;
-    let currentEffect = 19;
-    const CIRCLE_SIZE = 200, CIRCLE_SIZE_MOBILE = 140;
-
-    let fxW, fxH;
-    function fxResize() { fxW = fxCanvas.width = window.innerWidth; fxH = fxCanvas.height = window.innerHeight; }
-    fxResize();
-    window.addEventListener('resize', fxResize);
-
     // ═══════════════════════════════════════════
-    // 20 CREATIVE REVEAL VARIANTS
+    // BACKGROUND PARTICLES
     // ═══════════════════════════════════════════
-    const EFFECTS = [
-      // 1 — Glitch RGB Split
-      {
-        name: 'Glitch RGB',
-        mask: (cx, cy, r) => `radial-gradient(circle ${r}px at ${cx}px ${cy}px, black 0%, black 40%, transparent 100%)`,
-        filter: 'none',
-        fx: (ctx, cx, cy, r, t) => {
-          if (r < 1) return;
-          const shift = Math.sin(t * 0.02) * 6 + (Math.random() > 0.9 ? 20 : 0);
-          ctx.save();
-          ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2); ctx.clip();
-          ctx.globalCompositeOperation = 'screen';
-          ctx.fillStyle = `rgba(255,0,0,0.12)`; ctx.fillRect(cx - r + shift, cy - r, r * 2, r * 2);
-          ctx.fillStyle = `rgba(0,255,0,0.12)`; ctx.fillRect(cx - r, cy - r - shift * 0.5, r * 2, r * 2);
-          ctx.fillStyle = `rgba(0,100,255,0.12)`; ctx.fillRect(cx - r - shift, cy - r, r * 2, r * 2);
-          ctx.globalCompositeOperation = 'source-over';
-          for (let i = 0; i < 3; i++) {
-            const ly = cy - r + Math.random() * r * 2;
-            const lh = 1 + Math.random() * 3;
-            ctx.fillStyle = `rgba(255,255,255,${0.05 + Math.random() * 0.1})`;
-            ctx.fillRect(cx - r, ly, r * 2, lh);
-          }
-          ctx.restore();
-        }
-      },
-      // 2 — Neon Glow Ring
-      {
-        name: 'Neon Ring',
-        mask: (cx, cy, r) => `radial-gradient(circle ${r}px at ${cx}px ${cy}px, black 0%, black 40%, transparent 100%)`,
-        filter: 'none',
-        fx: (ctx, cx, cy, r, t) => {
-          if (r < 1) return;
-          const hue = (t * 0.5) % 360;
-          for (let i = 3; i >= 0; i--) {
-            ctx.beginPath(); ctx.arc(cx, cy, r + i * 4, 0, Math.PI * 2);
-            ctx.strokeStyle = `hsla(${hue + i * 20}, 100%, 60%, ${0.15 - i * 0.03})`;
-            ctx.lineWidth = 8 - i * 1.5; ctx.stroke();
-          }
-          ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2);
-          ctx.strokeStyle = `hsla(${hue}, 100%, 70%, 0.6)`;
-          ctx.lineWidth = 2; ctx.stroke();
-        }
-      },
-      // 3 — Ink Blob
-      {
-        name: 'Ink Blob',
-        mask: (cx, cy, r) => `radial-gradient(circle ${r}px at ${cx}px ${cy}px, black 0%, black 40%, transparent 100%)`,
-        filter: 'none',
-        fx: (ctx, cx, cy, r, t) => {
-          if (r < 1) return;
-          ctx.save();
-          ctx.beginPath();
-          const points = 12;
-          for (let i = 0; i <= points; i++) {
-            const a = (i / points) * Math.PI * 2;
-            const wobble = Math.sin(a * 3 + t * 0.003) * r * 0.15 + Math.sin(a * 7 + t * 0.005) * r * 0.08;
-            const px = cx + Math.cos(a) * (r + wobble);
-            const py = cy + Math.sin(a) * (r + wobble);
-            if (i === 0) ctx.moveTo(px, py);
-            else ctx.lineTo(px, py);
-          }
-          ctx.closePath(); ctx.clip();
-          ctx.globalAlpha = 0.25;
-          ctx.drawImage(fxCanvas, 0, 0);
-          ctx.globalAlpha = 1;
-          ctx.restore();
-        }
-      },
-      // 4 — Frosted Glass
-      {
-        name: 'Frosted Glass',
-        mask: (cx, cy, r) => `radial-gradient(circle ${r}px at ${cx}px ${cy}px, black 0%, black 40%, transparent 100%)`,
-        filter: 'blur(8px) brightness(1.15) saturate(1.3)',
-        fx: () => {}
-      },
-      // 5 — Holographic Sheen
-      {
-        name: 'Holographic',
-        mask: (cx, cy, r) => `radial-gradient(circle ${r}px at ${cx}px ${cy}px, black 0%, black 40%, transparent 100%)`,
-        filter: 'saturate(1.4)',
-        fx: (ctx, cx, cy, r, t) => {
-          if (r < 1) return;
-          ctx.save();
-          ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2); ctx.clip();
-          const grad = ctx.createLinearGradient(cx - r, cy - r, cx + r, cy + r);
-          for (let i = 0; i <= 6; i++) {
-            const hue = (t * 0.3 + i * 60) % 360;
-            grad.addColorStop(i / 6, `hsla(${hue}, 80%, 60%, 0.12)`);
-          }
-          ctx.fillStyle = grad; ctx.fillRect(cx - r, cy - r, r * 2, r * 2);
-          ctx.restore();
-        }
-      },
-      // 6 — CRT Scanlines
-      {
-        name: 'CRT Scanlines',
-        mask: (cx, cy, r) => `radial-gradient(circle ${r}px at ${cx}px ${cy}px, black 0%, black 40%, transparent 100%)`,
-        filter: 'contrast(1.2) brightness(1.05)',
-        fx: (ctx, cx, cy, r, t) => {
-          if (r < 1) return;
-          ctx.save();
-          ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2); ctx.clip();
-          const offset = (t * 0.5) % 4;
-          for (let y = cy - r; y < cy + r; y += 3) {
-            ctx.fillStyle = 'rgba(0,0,0,0.15)';
-            ctx.fillRect(cx - r, y + offset, r * 2, 1);
-          }
-          const scanY = cy - r + ((t * 0.8) % (r * 2));
-          const scanGrad = ctx.createLinearGradient(cx, scanY - 15, cx, scanY + 15);
-          scanGrad.addColorStop(0, 'rgba(255,255,255,0)');
-          scanGrad.addColorStop(0.5, 'rgba(255,255,255,0.08)');
-          scanGrad.addColorStop(1, 'rgba(255,255,255,0)');
-          ctx.fillStyle = scanGrad;
-          ctx.fillRect(cx - r, scanY - 15, r * 2, 30);
-          ctx.restore();
-        }
-      },
-      // 7 — Duotone Blue/Orange
-      {
-        name: 'Duotone',
-        mask: (cx, cy, r) => `radial-gradient(circle ${r}px at ${cx}px ${cy}px, black 0%, black 40%, transparent 100%)`,
-        filter: 'sepia(1) saturate(2) hue-rotate(180deg) contrast(1.1)',
-        fx: () => {}
-      },
-      // 8 — Wave Distortion
-      {
-        name: 'Wave Distort',
-        mask: (cx, cy, r) => {
-          const wobble = Math.sin(performance.now() * 0.004) * 12;
-          return `radial-gradient(ellipse ${r + wobble}px ${r - wobble * 0.5}px at ${cx}px ${cy}px, black 0%, black 40%, transparent 100%)`;
-        },
-        filter: 'none',
-        fx: () => {}
-      },
-      // 9 — Diamond Cut
-      {
-        name: 'Diamond Cut',
-        mask: (cx, cy, r) => `radial-gradient(circle ${r}px at ${cx}px ${cy}px, black 0%, black 40%, transparent 100%)`,
-        filter: 'none',
-        fx: (ctx, cx, cy, r, t) => {
-          if (r < 1) return;
-          const rot = t * 0.002;
-          ctx.save();
-          ctx.translate(cx, cy); ctx.rotate(rot);
-          ctx.beginPath();
-          const h = r * 0.85;
-          ctx.moveTo(0, -h); ctx.lineTo(h, 0); ctx.lineTo(0, h); ctx.lineTo(-h, 0);
-          ctx.closePath(); ctx.clip();
-          ctx.rotate(-rot); ctx.translate(-cx, -cy);
-          ctx.globalAlpha = 0.15;
-          ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, fxW, fxH);
-          ctx.globalAlpha = 1;
-          ctx.restore();
-        }
-      },
-      // 10 — Pixel Mosaic
-      {
-        name: 'Pixel Mosaic',
-        mask: (cx, cy, r) => `radial-gradient(circle ${r}px at ${cx}px ${cy}px, black 0%, black 40%, transparent 100%)`,
-        filter: 'none',
-        fx: (ctx, cx, cy, r, t) => {
-          if (r < 1) return;
-          const cellSize = 12;
-          ctx.save();
-          ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2); ctx.clip();
-          ctx.globalCompositeOperation = 'source-over';
-          for (let x = cx - r; x < cx + r; x += cellSize) {
-            for (let y = cy - r; y < cy + r; y += cellSize) {
-              if (Math.sqrt((x - cx) ** 2 + (y - cy) ** 2) > r) continue;
-              const v = Math.random() * 0.08;
-              ctx.fillStyle = `rgba(255,255,255,${v})`;
-              ctx.fillRect(x, y, cellSize - 1, cellSize - 1);
-            }
-          }
-          ctx.restore();
-        }
-      },
-      // 11 — Solar Flare
-      {
-        name: 'Solar Flare',
-        mask: (cx, cy, r) => `radial-gradient(circle ${r}px at ${cx}px ${cy}px, black 0%, black 40%, transparent 100%)`,
-        filter: 'brightness(1.2)',
-        fx: (ctx, cx, cy, r, t) => {
-          if (r < 1) return;
-          const rays = 8;
-          ctx.save();
-          ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2); ctx.clip();
-          for (let i = 0; i < rays; i++) {
-            const a = (i / rays) * Math.PI * 2 + t * 0.001;
-            const len = r * (0.6 + Math.sin(t * 0.005 + i) * 0.3);
-            const grad = ctx.createLinearGradient(cx, cy, cx + Math.cos(a) * len, cy + Math.sin(a) * len);
-            grad.addColorStop(0, 'rgba(255, 220, 100, 0.2)');
-            grad.addColorStop(1, 'rgba(255, 220, 100, 0)');
-            ctx.beginPath();
-            ctx.moveTo(cx, cy);
-            ctx.lineTo(cx + Math.cos(a - 0.08) * len, cy + Math.sin(a - 0.08) * len);
-            ctx.lineTo(cx + Math.cos(a + 0.08) * len, cy + Math.sin(a + 0.08) * len);
-            ctx.closePath();
-            ctx.fillStyle = grad; ctx.fill();
-          }
-          ctx.beginPath(); ctx.arc(cx, cy, r * 0.15, 0, Math.PI * 2);
-          ctx.fillStyle = 'rgba(255, 250, 200, 0.3)'; ctx.fill();
-          ctx.restore();
-        }
-      },
-      // 12 — Echo Trail
-      {
-        name: 'Echo Trail',
-        mask: (cx, cy, r) => `radial-gradient(circle ${r}px at ${cx}px ${cy}px, black 0%, black 40%, transparent 100%)`,
-        filter: 'none',
-        fx: (ctx, cx, cy, r, t) => {
-          if (r < 1) return;
-          for (let i = 1; i <= 4; i++) {
-            const delay = i * 0.08;
-            const ex = cx - (cx - prevCx) * delay * 3;
-            const ey = cy - (cy - prevCy) * delay * 3;
-            const er = r * (1 - i * 0.15);
-            ctx.beginPath(); ctx.arc(ex, ey, er, 0, Math.PI * 2);
-            ctx.strokeStyle = `rgba(255, 255, 255, ${0.12 - i * 0.025})`;
-            ctx.lineWidth = 1.5; ctx.stroke();
-          }
-        }
-      },
-      // 13 — Vortex Spin
-      {
-        name: 'Vortex Spin',
-        mask: (cx, cy, r) => `radial-gradient(circle ${r}px at ${cx}px ${cy}px, black 0%, black 40%, transparent 100%)`,
-        filter: 'none',
-        fx: (ctx, cx, cy, r, t) => {
-          if (r < 1) return;
-          ctx.save();
-          ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2); ctx.clip();
-          ctx.translate(cx, cy); ctx.rotate(t * 0.003);
-          const arms = 6;
-          for (let i = 0; i < arms; i++) {
-            const a = (i / arms) * Math.PI * 2;
-            ctx.beginPath();
-            ctx.moveTo(0, 0);
-            for (let d = 0; d < r; d += 2) {
-              const angle = a + d * 0.04;
-              const x = Math.cos(angle) * d;
-              const y = Math.sin(angle) * d;
-              ctx.lineTo(x, y);
-            }
-            ctx.strokeStyle = `rgba(150, 100, 255, ${0.12})`;
-            ctx.lineWidth = 2; ctx.stroke();
-          }
-          ctx.restore();
-        }
-      },
-      // 14 — Noise Grain
-      {
-        name: 'Film Grain',
-        mask: (cx, cy, r) => `radial-gradient(circle ${r}px at ${cx}px ${cy}px, black 0%, black 40%, transparent 100%)`,
-        filter: 'contrast(1.1)',
-        fx: (ctx, cx, cy, r, t) => {
-          if (r < 1) return;
-          ctx.save();
-          ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2); ctx.clip();
-          const imgData = ctx.createImageData(Math.ceil(r * 2), Math.ceil(r * 2));
-          const data = imgData.data;
-          for (let i = 0; i < data.length; i += 4) {
-            const v = Math.random() * 40;
-            data[i] = v; data[i + 1] = v; data[i + 2] = v; data[i + 3] = 25;
-          }
-          ctx.putImageData(imgData, cx - r, cy - r);
-          ctx.restore();
-        }
-      },
-      // 15 — Glass Sphere
-      {
-        name: 'Glass Sphere',
-        mask: (cx, cy, r) => `radial-gradient(circle ${r}px at ${cx}px ${cy}px, black 0%, black 40%, transparent 100%)`,
-        filter: 'brightness(1.1) contrast(1.05)',
-        fx: (ctx, cx, cy, r, t) => {
-          if (r < 1) return;
-          ctx.save();
-          const grad = ctx.createRadialGradient(cx - r * 0.25, cy - r * 0.25, r * 0.05, cx, cy, r);
-          grad.addColorStop(0, 'rgba(255,255,255,0.2)');
-          grad.addColorStop(0.4, 'rgba(255,255,255,0.05)');
-          grad.addColorStop(1, 'rgba(0,0,0,0.15)');
-          ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2);
-          ctx.fillStyle = grad; ctx.fill();
-          ctx.beginPath();
-          ctx.ellipse(cx - r * 0.3, cy - r * 0.35, r * 0.2, r * 0.1, -0.5, 0, Math.PI * 2);
-          ctx.fillStyle = 'rgba(255,255,255,0.25)'; ctx.fill();
-          ctx.restore();
-        }
-      },
-      // 16 — Double Vision
-      {
-        name: 'Double Vision',
-        mask: (cx, cy, r) => `radial-gradient(circle ${r}px at ${cx}px ${cy}px, black 0%, black 40%, transparent 100%)`,
-        filter: 'none',
-        fx: (ctx, cx, cy, r, t) => {
-          if (r < 1) return;
-          const offset = Math.sin(t * 0.004) * 8;
-          ctx.save();
-          ctx.globalAlpha = 0.12;
-          ctx.beginPath(); ctx.arc(cx + offset, cy - offset * 0.5, r * 0.92, 0, Math.PI * 2);
-          ctx.strokeStyle = '#ff4444'; ctx.lineWidth = 1.5; ctx.stroke();
-          ctx.beginPath(); ctx.arc(cx - offset, cy + offset * 0.5, r * 0.92, 0, Math.PI * 2);
-          ctx.strokeStyle = '#4444ff'; ctx.lineWidth = 1.5; ctx.stroke();
-          ctx.globalAlpha = 1;
-          ctx.restore();
-        }
-      },
-      // 17 — Maze Pattern
-      {
-        name: 'Circuit Board',
-        mask: (cx, cy, r) => `radial-gradient(circle ${r}px at ${cx}px ${cy}px, black 0%, black 40%, transparent 100%)`,
-        filter: 'none',
-        fx: (ctx, cx, cy, r, t) => {
-          if (r < 1) return;
-          ctx.save();
-          ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2); ctx.clip();
-          ctx.strokeStyle = 'rgba(0, 255, 100, 0.12)';
-          ctx.lineWidth = 1;
-          const step = 20;
-          const seed = 42;
-          for (let x = cx - r; x < cx + r; x += step) {
-            for (let y = cy - r; y < cy + r; y += step) {
-              if (Math.sqrt((x - cx) ** 2 + (y - cy) ** 2) > r) continue;
-              const h = ((x * 7 + y * 13 + seed) % 3);
-              if (h === 0) { ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x + step, y); ctx.stroke(); }
-              else if (h === 1) { ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x, y + step); ctx.stroke(); }
-              else { ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x + step, y + step); ctx.stroke(); }
-              if ((x + y) % (step * 3) === 0) {
-                ctx.beginPath(); ctx.arc(x + step / 2, y + step / 2, 2, 0, Math.PI * 2);
-                ctx.fillStyle = 'rgba(0, 255, 100, 0.2)'; ctx.fill();
-              }
-            }
-          }
-          ctx.restore();
-        }
-      },
-      // 18 — Thermal Camera
-      {
-        name: 'Thermal Cam',
-        mask: (cx, cy, r) => `radial-gradient(circle ${r}px at ${cx}px ${cy}px, black 0%, black 40%, transparent 100%)`,
-        filter: 'none',
-        fx: (ctx, cx, cy, r, t) => {
-          if (r < 1) return;
-          ctx.save();
-          ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2); ctx.clip();
-          const grad = ctx.createRadialGradient(cx, cy, 0, cx, cy, r);
-          grad.addColorStop(0, 'rgba(255, 0, 0, 0.2)');
-          grad.addColorStop(0.3, 'rgba(255, 165, 0, 0.15)');
-          grad.addColorStop(0.6, 'rgba(255, 255, 0, 0.1)');
-          grad.addColorStop(0.85, 'rgba(0, 100, 255, 0.1)');
-          grad.addColorStop(1, 'rgba(0, 0, 100, 0.15)');
-          ctx.fillStyle = grad; ctx.fillRect(cx - r, cy - r, r * 2, r * 2);
-          ctx.restore();
-        }
-      },
-      // 19 — Water Ripple
-      {
-        name: 'Water Ripple',
-        mask: (cx, cy, r) => `radial-gradient(circle ${r}px at ${cx}px ${cy}px, black 0%, black 40%, transparent 100%)`,
-        filter: 'none',
-        fx: (ctx, cx, cy, r, t) => {
-          if (r < 1) return;
-          ctx.save();
-          ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2); ctx.clip();
-          for (let i = 0; i < 5; i++) {
-            const rr = (r * 0.3 + (t * 0.06 + i * r * 0.15) % (r * 0.8));
-            const alpha = 1 - rr / r;
-            ctx.beginPath(); ctx.arc(cx, cy, rr, 0, Math.PI * 2);
-            ctx.strokeStyle = `rgba(150, 200, 255, ${alpha * 0.2})`;
-            ctx.lineWidth = 1.5; ctx.stroke();
-          }
-          ctx.restore();
-        }
-      },
-      // 20 — Warp Speed
-      {
-        name: 'Warp Speed',
-        mask: (cx, cy, r) => `radial-gradient(circle ${r}px at ${cx}px ${cy}px, black 0%, black 40%, transparent 100%)`,
-        filter: 'none',
-        fx: (ctx, cx, cy, r, t) => {
-          if (r < 1) return;
-          ctx.save();
-          ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2); ctx.clip();
-          const starCount = 30;
-          for (let i = 0; i < starCount; i++) {
-            const a = (i / starCount) * Math.PI * 2 + t * 0.001;
-            const speed = (t * 0.5 + i * 17) % r;
-            const sx = cx + Math.cos(a) * speed;
-            const sy = cy + Math.sin(a) * speed;
-            const len = speed * 0.15;
-            const alpha = (1 - speed / r) * 0.4;
-            ctx.beginPath();
-            ctx.moveTo(sx, sy);
-            ctx.lineTo(sx - Math.cos(a) * len, sy - Math.sin(a) * len);
-            ctx.strokeStyle = `rgba(200, 220, 255, ${alpha})`;
-            ctx.lineWidth = 1.5; ctx.stroke();
-          }
-          ctx.restore();
-        }
-      }
-    ];
+    const bgCanvas = document.getElementById('bgParticles');
+    const bgCtx = bgCanvas.getContext('2d');
+    let BGW, BGH;
 
-    // ═══════════════════════════════════════════
-    // NAV
-    // ═══════════════════════════════════════════
-    const dotsEl = document.getElementById('effectDots');
-    const nameEl = document.getElementById('effectName');
-    const counterEl = document.getElementById('effectCounter');
-    EFFECTS.forEach((_, i) => { const d = document.createElement('span'); if (i === currentEffect) d.classList.add('active'); dotsEl.appendChild(d); });
-    updateNav();
-
-    function updateNav() {
-      nameEl.textContent = EFFECTS[currentEffect].name;
-      counterEl.textContent = `${currentEffect + 1} / ${EFFECTS.length}`;
-      dotsEl.querySelectorAll('span').forEach((d, i) => d.classList.toggle('active', i === currentEffect));
+    function bgResize() {
+      BGW = bgCanvas.width = window.innerWidth;
+      BGH = bgCanvas.height = window.innerHeight;
     }
+    bgResize();
+    window.addEventListener('resize', bgResize);
 
-    function switchEffect(dir) {
-      currentEffect = (currentEffect + dir + EFFECTS.length) % EFFECTS.length;
-      updateNav();
-      const eff = EFFECTS[currentEffect];
-      reveal.style.filter = typeof eff.filter === 'function' ? eff.filter() : eff.filter;
-    }
-
-    document.getElementById('prevBtn').addEventListener('click', () => switchEffect(-1));
-    document.getElementById('nextBtn').addEventListener('click', () => switchEffect(1));
-
-    document.addEventListener('keydown', e => {
-      if (e.key === 'ArrowLeft') switchEffect(-1);
-      else if (e.key === 'ArrowRight') switchEffect(1);
-      else if (e.key === '0') {
-        zeroCount++;
-        clearTimeout(zeroTimer);
-        zeroTimer = setTimeout(() => { zeroCount = 0; }, 1500);
-        if (zeroCount >= 4) {
-          zeroCount = 0;
-          if (!document.fullscreenElement) document.documentElement.requestFullscreen().catch(() => {});
-          else document.exitFullscreen().catch(() => {});
-        }
-      }
-    });
-
-    // ═══════════════════════════════════════════
-    // TOUCH / MOUSE
-    // ═══════════════════════════════════════════
-    if (isMobile) {
-      document.addEventListener('touchstart', e => { active = true; lastTouchTime = Date.now(); const t = e.touches[0]; mx = t.clientX; my = t.clientY; targetR = CIRCLE_SIZE_MOBILE; }, { passive: true });
-      document.addEventListener('touchmove', e => { active = true; lastTouchTime = Date.now(); const t = e.touches[0]; mx = t.clientX; my = t.clientY; }, { passive: true });
-      document.addEventListener('touchend', () => { setTimeout(() => { if (Date.now() - lastTouchTime > 600) { targetR = 0; active = false; } }, 600); });
-    } else {
-      targetR = CIRCLE_SIZE; active = true;
-      document.addEventListener('mousemove', e => { mx = e.clientX; my = e.clientY; dot.style.left = mx + 'px'; dot.style.top = my + 'px'; });
-    }
-
-    // ═══════════════════════════════════════════
-    // LIGHTNING
-    // ═══════════════════════════════════════════
-    const lCanvas = document.getElementById('lightning');
-    const lCtx = lCanvas.getContext('2d');
-    let LW, LH;
-    function lResize() { LW = lCanvas.width = window.innerWidth; LH = lCanvas.height = window.innerHeight; }
-    lResize(); window.addEventListener('resize', lResize);
-
-    let sparks = [];
-    function addSpark() {
-      const angle = Math.random() * Math.PI * 2;
-      const dist = 15 + Math.random() * 30;
-      sparks.push({ x: mx + Math.cos(angle) * dist, y: my + Math.sin(angle) * dist, len: 8 + Math.random() * 15, angle: angle + (Math.random() - 0.5) * 1.2, alpha: 0.6 + Math.random() * 0.4, decay: 0.04 + Math.random() * 0.04 });
-    }
-
-    function drawLightning() {
-      lCtx.clearRect(0, 0, LW, LH);
-      for (let i = sparks.length - 1; i >= 0; i--) {
-        const s = sparks[i]; s.alpha -= s.decay;
-        if (s.alpha <= 0) { sparks.splice(i, 1); continue; }
-        const ex = s.x + Math.cos(s.angle) * s.len;
-        const ey = s.y + Math.sin(s.angle) * s.len;
-        lCtx.beginPath(); lCtx.moveTo(s.x, s.y); lCtx.lineTo(ex, ey);
-        lCtx.strokeStyle = `rgba(180, 200, 255, ${s.alpha * 0.3})`; lCtx.lineWidth = 4;
-        lCtx.shadowColor = 'rgba(100, 150, 255, 0.5)'; lCtx.shadowBlur = 10; lCtx.stroke(); lCtx.shadowBlur = 0;
-        lCtx.beginPath(); lCtx.moveTo(s.x, s.y); lCtx.lineTo(ex, ey);
-        lCtx.strokeStyle = `rgba(255, 255, 255, ${s.alpha * 0.7})`; lCtx.lineWidth = 1; lCtx.stroke();
-      }
-      requestAnimationFrame(drawLightning);
-    }
-    drawLightning();
-    setInterval(() => { if (!isMobile && active && Math.random() < 0.4) addSpark(); }, 100);
-
-    // ═══════════════════════════════════════════
-    // MAIN LOOP
-    // ═══════════════════════════════════════════
-    let prevCx = cx, prevCy = cy;
-    let zeroCount = 0, zeroTimer = null;
-
-    function loop() {
-      prevCx = cx; prevCy = cy;
-      cx += (mx - cx) * 0.25;
-      cy += (my - cy) * 0.25;
-      currentR += (targetR - currentR) * 0.1;
-
-      const eff = EFFECTS[currentEffect];
-      const t = performance.now();
-
-      if (typeof eff.filter === 'function') reveal.style.filter = eff.filter();
-      else reveal.style.filter = eff.filter;
-
-      fctx.clearRect(0, 0, fxW, fxH);
-      if (currentR > 0.5 && eff.fx) eff.fx(fctx, cx, cy, currentR, t);
-
-      if (currentR > 0.5) {
-        reveal.style.maskImage = eff.mask(cx, cy, currentR);
-        reveal.style.webkitMaskImage = eff.mask(cx, cy, currentR);
-      } else {
-        reveal.style.maskImage = 'radial-gradient(circle 0px at 50% 50%, black 0%, transparent 100%)';
-        reveal.style.webkitMaskImage = 'radial-gradient(circle 0px at 50% 50%, black 0%, transparent 100%)';
-      }
-
-      requestAnimationFrame(loop);
-    }
-    loop();
-
-    // ═══════════════════════════════════════════
-    // WELCOME TEXT
-    // ═══════════════════════════════════════════
-    const welcomeText = 'welcome to xoleric portfolio';
-    const welcomeEl = document.getElementById('welcome');
-    const letterEls = [];
-    welcomeText.split('').forEach((char, index) => {
-      const span = document.createElement('span'); span.textContent = char; span.classList.add('letter');
-      span.style.animationDelay = `${index * 0.1}s`;
-      welcomeEl.appendChild(span); letterEls.push(span);
-      setTimeout(() => span.classList.add('visible'), index * 120);
-    });
-
-    const LETTER_RADIUS = 150, LETTER_FORCE = 35;
-    const letterStates = letterEls.map(() => ({ offsetX: 0, offsetY: 0, velocityX: 0, velocityY: 0, glowIntensity: 0, scaleBoost: 0, rotX: 0, rotY: 0 }));
-
-    function updateLetters() {
-      letterEls.forEach((span, i) => {
-        if (!span.classList.contains('visible')) return;
-        const rect = span.getBoundingClientRect();
-        const lx = rect.left + rect.width / 2, ly = rect.top + rect.height / 2;
-        let dx = mx - lx, dy = my - ly;
-        const dist = Math.sqrt(dx * dx + dy * dy);
-        const state = letterStates[i];
-        let forceX = 0, forceY = 0, glow = 0, scale = 0, rX = 0, rY = 0;
-        if (dist < LETTER_RADIUS && dist > 0) {
-          const strength = 1 - dist / LETTER_RADIUS, power = strength * strength;
-          forceX = -(dx / dist) * LETTER_FORCE * power; forceY = -(dy / dist) * LETTER_FORCE * power;
-          glow = power; scale = power * 0.15;
-          rX = -(dy / dist) * 20 * power; rY = (dx / dist) * 20 * power;
-        }
-        state.velocityX += forceX; state.velocityY += forceY;
-        state.velocityX *= 0.88; state.velocityY *= 0.88;
-        state.offsetX += state.velocityX; state.offsetY += state.velocityY;
-        const rf = 0.12;
-        state.offsetX += -state.offsetX * rf; state.offsetY += -state.offsetY * rf;
-        state.glowIntensity += (glow - state.glowIntensity) * 0.15;
-        state.scaleBoost += (scale - state.scaleBoost) * 0.15;
-        state.rotX += (rX - state.rotX) * 0.1; state.rotY += (rY - state.rotY) * 0.1;
-        const s = 1 + state.scaleBoost, g = state.glowIntensity, hue = 190 + g * 60;
-        span.style.transform = `translate(${state.offsetX}px, ${state.offsetY}px) scale(${s}) perspective(500px) rotateX(${state.rotX}deg) rotateY(${state.rotY}deg)`;
-        span.style.textShadow = `0 0 ${10 + g * 30}px hsla(${hue}, 100%, 70%, ${0.3 + g * 0.7}), 0 0 ${20 + g * 50}px hsla(${hue}, 100%, 60%, ${0.1 + g * 0.5}), 0 0 ${5 + g * 15}px rgba(255,255,255,${g * 0.4})`;
-        span.style.color = g > 0.3 ? `hsl(${hue}, ${60 + g * 40}%, ${80 + g * 15}%)` : 'rgba(230, 230, 230, 0.9)';
+    const bgStars = [];
+    for (let i = 0; i < 80; i++) {
+      bgStars.push({
+        x: Math.random() * window.innerWidth,
+        y: Math.random() * window.innerHeight,
+        size: Math.random() * 1.5 + 0.5,
+        alpha: Math.random() * 0.5 + 0.2,
+        speed: Math.random() * 0.0005 + 0.0002,
+        phase: Math.random() * Math.PI * 2
       });
     }
 
-    // ═══════════════════════════════════════════
-    // NEURONS
-    // ═══════════════════════════════════════════
-    const pc = document.getElementById('particles');
-    const pctx = pc.getContext('2d');
-    let PW, PH;
-    function pResize() { PW = pc.width = window.innerWidth; PH = pc.height = window.innerHeight; }
-    pResize(); window.addEventListener('resize', pResize);
-
-    const NEURON_COUNT = 40, CONNECT_DIST = 200, CURSOR_REPEL = 250, REVEAL_REPEL = 220;
-    const neurons = [];
-    function createNeuron() {
-      let x, y;
-      do { x = Math.random() * PW; y = Math.random() * PH; } while (Math.sqrt((x - mx) ** 2 + (y - my) ** 2) < CURSOR_REPEL);
-      return { x, y, vx: (Math.random() - 0.5) * 0.02, vy: (Math.random() - 0.5) * 0.02, size: Math.random() * 4 + 3, opacity: Math.random() * 0.6 + 0.3, pulse: Math.random() * Math.PI * 2, pulseSpeed: Math.random() * 0.003 + 0.001, drift: Math.random() * Math.PI * 2, driftSpeed: Math.random() * 0.0004 + 0.0001, driftRadius: Math.random() * 0.012 + 0.004 };
+    function drawBgParticles(t) {
+      bgCtx.clearRect(0, 0, BGW, BGH);
+      bgStars.forEach(s => {
+        const flicker = 0.5 + Math.sin(t * s.speed + s.phase) * 0.5;
+        bgCtx.beginPath();
+        bgCtx.arc(s.x, s.y, s.size, 0, Math.PI * 2);
+        bgCtx.fillStyle = `rgba(180, 200, 255, ${s.alpha * flicker})`;
+        bgCtx.fill();
+      });
+      requestAnimationFrame(drawBgParticles);
     }
-    for (let i = 0; i < NEURON_COUNT; i++) neurons.push(createNeuron());
+    drawBgParticles(0);
 
-    function drawNeurons() {
-      pctx.clearRect(0, 0, PW, PH);
-      for (let i = 0; i < neurons.length; i++) {
-        const n = neurons[i];
-        let dx = mx - n.x, dy = my - n.y;
-        const dtc = Math.sqrt(dx * dx + dy * dy);
-        if (dtc < CURSOR_REPEL && dtc > 0) { const f = (1 - dtc / CURSOR_REPEL) * 0.4; n.vx -= (dx / dtc) * f; n.vy -= (dy / dtc) * f; }
-        const dxr = cx - n.x, dyr = cy - n.y;
-        const dtr = Math.sqrt(dxr * dxr + dyr * dyr);
-        if (dtr < REVEAL_REPEL && dtr > 0) { const f = (1 - dtr / REVEAL_REPEL) * 0.25; n.vx -= (dxr / dtr) * f; n.vy -= (dyr / dtr) * f; }
-        n.vx *= 0.96; n.vy *= 0.96;
-        n.drift += n.driftSpeed; n.vx += Math.sin(n.drift) * n.driftRadius; n.vy += Math.cos(n.drift * 0.7) * n.driftRadius;
-        n.x += n.vx; n.y += n.vy; n.pulse += n.pulseSpeed;
-        if (n.x < -30) n.x = PW + 30; if (n.x > PW + 30) n.x = -30;
-        if (n.y < -30) n.y = PH + 30; if (n.y > PH + 30) n.y = -30;
-      }
-      for (let i = 0; i < neurons.length; i++) {
-        for (let j = i + 1; j < neurons.length; j++) {
-          const a = neurons[i], b = neurons[j];
-          const dx = a.x - b.x, dy = a.y - b.y, dist = Math.sqrt(dx * dx + dy * dy);
-          if (dist < CONNECT_DIST) { const t = 1 - dist / CONNECT_DIST; pctx.beginPath(); pctx.moveTo(a.x, a.y); pctx.lineTo(b.x, b.y); pctx.strokeStyle = `rgba(210, 170, 0, ${t * 0.5})`; pctx.lineWidth = t * 1.5; pctx.stroke(); }
+    // ═══════════════════════════════════════════
+    // GLOBE SCROLL ANIMATION
+    // ═══════════════════════════════════════════
+    const globe = document.getElementById('globe');
+    const globeWrapper = document.getElementById('globeWrapper');
+    const earthImg = document.getElementById('earthImg');
+    const globeGlow = document.getElementById('globeGlow');
+    const atmosphere = document.getElementById('atmosphere');
+    const progressBar = document.getElementById('progressBar');
+    const scrollIndicator = document.getElementById('scrollIndicator');
+    const infoEl = document.getElementById('info');
+
+    const totalScroll = document.documentElement.scrollHeight - window.innerHeight;
+    let scrollProgress = 0;
+    let targetProgress = 0;
+
+    let imgRotation = 0;
+    let currentScale = 0.3;
+    let currentY = window.innerHeight * 0.8;
+    let currentSkew = 0;
+    let currentBorderRadius = 50;
+
+    function lerp(a, b, t) { return a + (b - a) * t; }
+
+    window.addEventListener('scroll', () => {
+      targetProgress = window.scrollY / totalScroll;
+    }, { passive: true });
+
+    function animate() {
+      scrollProgress = lerp(scrollProgress, targetProgress, 0.08);
+
+      const progress = scrollProgress;
+      const centerX = window.innerWidth / 2;
+      const centerY = window.innerHeight / 2;
+
+      // Phase 1: Scroll up from bottom (0 -> 0.4)
+      // Phase 2: Stop at center, morph (0.4 -> 0.7)
+      // Phase 3: Hold at center (0.7 -> 1.0)
+
+      let translateY, scale, borderRadiusVal, glowAlpha, atmAlpha, imgOffset;
+      let skewAngle = 0;
+
+      if (progress < 0.4) {
+        // Rising phase: globe comes up from bottom, 2x slower
+        const p = progress / 0.4;
+        const eased = 1 - Math.pow(1 - p, 3);
+
+        translateY = lerp(window.innerHeight * 0.6, 0, eased);
+        scale = lerp(0.3, 1, eased);
+        borderRadiusVal = 50;
+        glowAlpha = 0;
+        atmAlpha = 0;
+        imgOffset = 0;
+        skewAngle = 0;
+
+        scrollIndicator.style.opacity = 1;
+        infoEl.style.opacity = 1;
+
+      } else if (progress < 0.7) {
+        // Morph phase: globe transforms at center
+        const p = (progress - 0.4) / 0.3;
+        const eased = p;
+
+        translateY = 0;
+        scale = lerp(1, 1.15, eased);
+
+        // Shape morph: circle -> rounded square -> back to circle
+        if (p < 0.5) {
+          borderRadiusVal = lerp(50, 20, p * 2);
+        } else {
+          borderRadiusVal = lerp(20, 50, (p - 0.5) * 2);
         }
+
+        glowAlpha = lerp(0, 1, eased);
+        atmAlpha = lerp(0, 1, eased);
+        imgOffset = eased * 30;
+        skewAngle = Math.sin(p * Math.PI) * 5;
+
+        scrollIndicator.style.opacity = 0;
+        infoEl.textContent = 'xoleric';
+        infoEl.style.opacity = 1;
+
+      } else {
+        // Hold phase: globe stays at center, slight pulse
+        const p = (progress - 0.7) / 0.3;
+        const pulse = Math.sin(p * Math.PI * 4) * 0.03;
+
+        translateY = 0;
+        scale = 1.15 + pulse;
+        borderRadiusVal = 50;
+        glowAlpha = 1;
+        atmAlpha = 1;
+        imgOffset = 30;
+        skewAngle = 0;
+
+        scrollIndicator.style.opacity = 0;
       }
-      for (let i = 0; i < neurons.length; i++) {
-        const n = neurons[i]; const pf = 0.6 + Math.sin(n.pulse) * 0.4; const alpha = n.opacity * pf;
-        pctx.beginPath(); pctx.arc(n.x, n.y, n.size * 2, 0, Math.PI * 2); pctx.fillStyle = `rgba(0, 0, 0, ${alpha * 0.1})`; pctx.fill();
-        pctx.beginPath(); pctx.arc(n.x, n.y, n.size, 0, Math.PI * 2); pctx.fillStyle = `rgba(0, 0, 0, ${alpha})`; pctx.fill();
-        pctx.beginPath(); pctx.arc(n.x, n.y, n.size * 0.5, 0, Math.PI * 2); pctx.fillStyle = `rgba(20, 18, 0, ${alpha * 0.8})`; pctx.fill();
-      }
-      requestAnimationFrame(drawNeurons);
-      updateLetters();
+
+      // Apply transforms
+      imgRotation += 0.15;
+
+      globe.style.transform = `scale(${scale}) skewY(${skewAngle}deg)`;
+      globe.style.borderRadius = `${borderRadiusVal}%`;
+
+      earthImg.style.transform = `translateX(${-imgOffset + Math.sin(imgRotation * 0.01) * 5}px) rotate(${imgRotation * 0.1}deg)`;
+
+      globeGlow.style.opacity = glowAlpha;
+      globeGlow.style.transform = `scale(${1 + glowAlpha * 0.2})`;
+
+      atmosphere.style.opacity = atmAlpha;
+      atmosphere.style.transform = `scale(${1 + atmAlpha * 0.1})`;
+
+      progressBar.style.width = `${progress * 100}%`;
+
+      requestAnimationFrame(animate);
     }
-    drawNeurons();
+
+    animate();
   </script>
 </body>
 </html>
