@@ -1,0 +1,796 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cursor Effects Collection</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: #0a0a0f;
+            min-height: 100vh;
+            overflow: hidden;
+            font-family: 'Segoe UI', system-ui, sans-serif;
+        }
+
+        #canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+
+        .nav {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            z-index: 1000;
+        }
+
+        .nav-btn {
+            width: 50px;
+            height: 50px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            background: rgba(255, 255, 255, 0.05);
+            color: white;
+            font-size: 24px;
+            cursor: pointer;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s;
+            backdrop-filter: blur(10px);
+        }
+
+        .nav-btn:hover {
+            background: rgba(255, 255, 255, 0.15);
+            border-color: rgba(255, 255, 255, 0.5);
+            transform: scale(1.1);
+        }
+
+        .effect-name {
+            color: white;
+            font-size: 14px;
+            background: rgba(0, 0, 0, 0.5);
+            padding: 8px 16px;
+            border-radius: 20px;
+            backdrop-filter: blur(10px);
+            white-space: nowrap;
+            min-width: 150px;
+            text-align: center;
+        }
+
+        .counter {
+            color: rgba(255, 255, 255, 0.5);
+            font-size: 12px;
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.5);
+            padding: 8px 12px;
+            border-radius: 10px;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="canvas"></canvas>
+    
+    <div class="counter">
+        <span id="current">1</span> / 20
+    </div>
+
+    <div class="nav">
+        <button class="nav-btn" id="prev">←</button>
+        <div class="effect-name" id="effectName">Sparkle Trail</div>
+        <button class="nav-btn" id="next">→</button>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        let width = canvas.width = window.innerWidth;
+        let height = canvas.height = window.innerHeight;
+
+        let mouseX = width / 2;
+        let mouseY = height / 2;
+        let currentEffect = 0;
+
+        const effects = [
+            {
+                name: "Sparkle Trail",
+                init: () => particles = [],
+                update: () => {
+                    for (let i = 0; i < 2; i++) {
+                        particles.push({
+                            x: mouseX,
+                            y: mouseY,
+                            vx: (Math.random() - 0.5) * 4,
+                            vy: (Math.random() - 0.5) * 4,
+                            life: 1,
+                            size: Math.random() * 4 + 2,
+                            color: `hsl(${Math.random() * 60 + 20}, 100%, 70%)`
+                        });
+                    }
+                    drawParticles();
+                }
+            },
+            {
+                name: "Fire Trail",
+                init: () => particles = [],
+                update: () => {
+                    for (let i = 0; i < 3; i++) {
+                        particles.push({
+                            x: mouseX,
+                            y: mouseY,
+                            vx: (Math.random() - 0.5) * 3,
+                            vy: Math.random() * 2 + 1,
+                            life: 1,
+                            size: Math.random() * 8 + 4,
+                            color: Math.random() > 0.5 ? '#ff6b00' : '#ff0000'
+                        });
+                    }
+                    drawParticles();
+                }
+            },
+            {
+                name: "Rainbow Spiral",
+                init: () => angle = 0,
+                update: () => {
+                    angle += 0.1;
+                    const x = mouseX + Math.cos(angle) * 50;
+                    const y = mouseY + Math.sin(angle) * 50;
+                    
+                    ctx.beginPath();
+                    ctx.arc(x, y, 10, 0, Math.PI * 2);
+                    ctx.fillStyle = `hsl(${(angle * 10) % 360}, 100%, 60%)`;
+                    ctx.fill();
+                }
+            },
+            {
+                name: "Matrix Code",
+                init: () => { drops = []; for (let i = 0; i < 30; i++) drops.push(0); },
+                update: () => {
+                    ctx.fillStyle = 'rgba(0, 0, 0, 0.05)';
+                    ctx.fillRect(0, 0, width, height);
+                    
+                    ctx.fillStyle = '#0f0';
+                    ctx.font = '14px monospace';
+                    
+                    for (let i = 0; i < drops.length; i++) {
+                        const char = String.fromCharCode(Math.random() * 128);
+                        const x = i * 30;
+                        const y = drops[i] * 20;
+                        
+                        if (Math.abs(x - mouseX) < 100 && Math.abs(y - mouseY) < 100) {
+                            ctx.fillStyle = '#0ff';
+                        } else {
+                            ctx.fillStyle = '#0f0';
+                        }
+                        
+                        ctx.fillText(char, x, y);
+                        
+                        if (y > height && Math.random() > 0.975) {
+                            drops[i] = 0;
+                        }
+                        drops[i]++;
+                    }
+                }
+            },
+            {
+                name: "Plasma Wave",
+                init: () => time = 0,
+                update: () => {
+                    time += 0.05;
+                    for (let x = 0; x < width; x += 20) {
+                        for (let y = 0; y < height; y += 20) {
+                            const dx = x - mouseX;
+                            const dy = y - mouseY;
+                            const dist = Math.sqrt(dx * dx + dy * dy);
+                            const wave = Math.sin(dist * 0.02 + time) * 50;
+                            
+                            if (wave > 30) {
+                                ctx.beginPath();
+                                ctx.arc(x, y, 3, 0, Math.PI * 2);
+                                ctx.fillStyle = `hsl(${(dist + time * 100) % 360}, 100%, 50%)`;
+                                ctx.fill();
+                            }
+                        }
+                    }
+                }
+            },
+            {
+                name: "Gravity Well",
+                init: () => particles = [],
+                update: () => {
+                    if (Math.random() > 0.8) {
+                        particles.push({
+                            x: Math.random() * width,
+                            y: 0,
+                            vx: 0,
+                            vy: 0,
+                            size: Math.random() * 3 + 1,
+                            life: 1
+                        });
+                    }
+                    
+                    particles.forEach(p => {
+                        const dx = mouseX - p.x;
+                        const dy = mouseY - p.y;
+                        const dist = Math.sqrt(dx * dx + dy * dy);
+                        const force = 500 / (dist + 1);
+                        
+                        p.vx += (dx / dist) * force * 0.01;
+                        p.vy += (dy / dist) * force * 0.01;
+                        p.x += p.vx;
+                        p.y += p.vy;
+                        
+                        ctx.beginPath();
+                        ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+                        ctx.fillStyle = `rgba(100, 200, 255, ${1 - dist / 500})`;
+                        ctx.fill();
+                    });
+                    
+                    particles = particles.filter(p => dist > 10);
+                }
+            },
+            {
+                name: "Neon Glow",
+                init: () => trail = [],
+                update: () => {
+                    trail.push({ x: mouseX, y: mouseY, time: Date.now() });
+                    trail = trail.filter(p => Date.now() - p.time < 500);
+                    
+                    for (let i = 1; i < trail.length; i++) {
+                        const p1 = trail[i - 1];
+                        const p2 = trail[i];
+                        const alpha = 1 - (Date.now() - p2.time) / 500;
+                        
+                        ctx.beginPath();
+                        ctx.moveTo(p1.x, p1.y);
+                        ctx.lineTo(p2.x, p2.y);
+                        ctx.strokeStyle = `rgba(0, 255, 255, ${alpha})`;
+                        ctx.lineWidth = 3;
+                        ctx.shadowBlur = 20;
+                        ctx.shadowColor = '#0ff';
+                        ctx.stroke();
+                        ctx.shadowBlur = 0;
+                    }
+                }
+            },
+            {
+                name: "Galaxy Spiral",
+                init: () => { stars = []; for (let i = 0; i < 200; i++) { stars.push({ angle: Math.random() * Math.PI * 2, dist: Math.random() * 200, speed: Math.random() * 0.02 + 0.01 }); } },
+                update: () => {
+                    stars.forEach(star => {
+                        star.angle += star.speed;
+                        const x = mouseX + Math.cos(star.angle) * star.dist;
+                        const y = mouseY + Math.sin(star.angle) * star.dist;
+                        
+                        ctx.beginPath();
+                        ctx.arc(x, y, 1.5, 0, Math.PI * 2);
+                        ctx.fillStyle = `rgba(255, 255, 255, ${1 - star.dist / 200})`;
+                        ctx.fill();
+                    });
+                }
+            },
+            {
+                name: "Electric Arc",
+                init: () => {},
+                update: () => {
+                    for (let i = 0; i < 5; i++) {
+                        ctx.beginPath();
+                        ctx.moveTo(mouseX, mouseY);
+                        
+                        let x = mouseX;
+                        let y = mouseY;
+                        
+                        for (let j = 0; j < 10; j++) {
+                            x += (Math.random() - 0.5) * 40;
+                            y += (Math.random() - 0.5) * 40;
+                            ctx.lineTo(x, y);
+                        }
+                        
+                        ctx.strokeStyle = `rgba(150, 150, 255, ${Math.random()})`;
+                        ctx.lineWidth = 2;
+                        ctx.stroke();
+                    }
+                }
+            },
+            {
+                name: "Snowflake",
+                init: () => flakes = [],
+                update: () => {
+                    if (Math.random() > 0.7) {
+                        flakes.push({
+                            x: mouseX + (Math.random() - 0.5) * 100,
+                            y: mouseY,
+                            vx: (Math.random() - 0.5) * 2,
+                            vy: Math.random() * 2 + 1,
+                            size: Math.random() * 6 + 2,
+                            rotation: Math.random() * Math.PI * 2,
+                            rotSpeed: (Math.random() - 0.5) * 0.1
+                        });
+                    }
+                    
+                    flakes.forEach(f => {
+                        f.x += f.vx;
+                        f.y += f.vy;
+                        f.rotation += f.rotSpeed;
+                        
+                        ctx.save();
+                        ctx.translate(f.x, f.y);
+                        ctx.rotate(f.rotation);
+                        
+                        ctx.beginPath();
+                        for (let i = 0; i < 6; i++) {
+                            const angle = (i / 6) * Math.PI * 2;
+                            ctx.moveTo(0, 0);
+                            ctx.lineTo(Math.cos(angle) * f.size, Math.sin(angle) * f.size);
+                        }
+                        ctx.strokeStyle = 'rgba(255, 255, 255, 0.8)';
+                        ctx.lineWidth = 1;
+                        ctx.stroke();
+                        
+                        ctx.restore();
+                    });
+                    
+                    flakes = flakes.filter(f => f.y < height + 20);
+                }
+            },
+            {
+                name: "Smoke",
+                init: () => smokeParticles = [],
+                update: () => {
+                    for (let i = 0; i < 2; i++) {
+                        smokeParticles.push({
+                            x: mouseX,
+                            y: mouseY,
+                            vx: (Math.random() - 0.5) * 2,
+                            vy: -Math.random() * 2 - 1,
+                            size: Math.random() * 20 + 10,
+                            life: 1,
+                            color: Math.random() * 50
+                        });
+                    }
+                    
+                    smokeParticles.forEach(p => {
+                        p.x += p.vx;
+                        p.y += p.vy;
+                        p.size += 0.5;
+                        p.life -= 0.015;
+                        
+                        ctx.beginPath();
+                        ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+                        ctx.fillStyle = `rgba(${p.color}, ${p.color}, ${p.color}, ${p.life * 0.3})`;
+                        ctx.fill();
+                    });
+                    
+                    smokeParticles = smokeParticles.filter(p => p.life > 0);
+                }
+            },
+            {
+                name: "Bubbles",
+                init: () => bubbles = [],
+                update: () => {
+                    if (Math.random() > 0.8) {
+                        bubbles.push({
+                            x: mouseX + (Math.random() - 0.5) * 50,
+                            y: mouseY,
+                            vx: (Math.random() - 0.5) * 2,
+                            vy: -Math.random() * 3 - 2,
+                            size: Math.random() * 20 + 5,
+                            wobble: Math.random() * Math.PI * 2
+                        });
+                    }
+                    
+                    bubbles.forEach(b => {
+                        b.wobble += 0.1;
+                        b.x += b.vx + Math.sin(b.wobble) * 2;
+                        b.y += b.vy;
+                        
+                        ctx.beginPath();
+                        ctx.arc(b.x, b.y, b.size, 0, Math.PI * 2);
+                        ctx.strokeStyle = `rgba(255, 255, 255, 0.5)`;
+                        ctx.lineWidth = 2;
+                        ctx.stroke();
+                        
+                        ctx.beginPath();
+                        ctx.arc(b.x - b.size * 0.3, b.y - b.size * 0.3, b.size * 0.2, 0, Math.PI * 2);
+                        ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+                        ctx.fill();
+                    });
+                    
+                    bubbles = bubbles.filter(b => b.y > -50);
+                }
+            },
+            {
+                name: "Lightning",
+                init: () => {},
+                update: () => {
+                    if (Math.random() > 0.9) {
+                        ctx.beginPath();
+                        let x = mouseX;
+                        let y = mouseY;
+                        
+                        for (let i = 0; i < 20; i++) {
+                            x += (Math.random() - 0.5) * 60;
+                            y += Math.random() * 30;
+                            ctx.lineTo(x, y);
+                            
+                            if (Math.random() > 0.8) {
+                                ctx.moveTo(x, y);
+                                ctx.lineTo(x + (Math.random() - 0.5) * 40, y + 40);
+                                ctx.moveTo(x, y);
+                            }
+                        }
+                        
+                        ctx.strokeStyle = `rgba(200, 200, 255, ${Math.random() * 0.5 + 0.5})`;
+                        ctx.lineWidth = 2;
+                        ctx.stroke();
+                        
+                        ctx.shadowBlur = 30;
+                        ctx.shadowColor = '#fff';
+                        ctx.stroke();
+                        ctx.shadowBlur = 0;
+                    }
+                }
+            },
+            {
+                name: "Heartbeat",
+                init: () => scale = 1,
+                update: () => {
+                    scale = 1 + Math.sin(Date.now() * 0.01) * 0.2;
+                    
+                    ctx.save();
+                    ctx.translate(mouseX, mouseY);
+                    ctx.scale(scale, scale);
+                    
+                    ctx.beginPath();
+                    ctx.moveTo(0, 20);
+                    ctx.bezierCurveTo(-20, 0, -40, 0, -40, -20);
+                    ctx.bezierCurveTo(-40, -40, 0, -40, 0, -20);
+                    ctx.bezierCurveTo(0, -40, 40, -40, 40, -20);
+                    ctx.bezierCurveTo(40, 0, 20, 0, 0, 20);
+                    
+                    ctx.fillStyle = '#ff0066';
+                    ctx.fill();
+                    
+                    ctx.shadowBlur = 20;
+                    ctx.shadowColor = '#ff0066';
+                    ctx.fill();
+                    ctx.shadowBlur = 0;
+                    
+                    ctx.restore();
+                }
+            },
+            {
+                name: "Butterfly",
+                init: () => { wingAngle = 0; },
+                update: () => {
+                    wingAngle += 0.15;
+                    const wingSpread = Math.sin(wingAngle) * 30;
+                    
+                    ctx.save();
+                    ctx.translate(mouseX, mouseY);
+                    
+                    // Left wing
+                    ctx.beginPath();
+                    ctx.ellipse(-15, 0, 25, 15 + wingSpread, -0.3, 0, Math.PI * 2);
+                    ctx.fillStyle = `hsl(${(Date.now() * 0.1) % 360}, 80%, 60%)`;
+                    ctx.fill();
+                    
+                    // Right wing
+                    ctx.beginPath();
+                    ctx.ellipse(15, 0, 25, 15 + wingSpread, 0.3, 0, Math.PI * 2);
+                    ctx.fill();
+                    
+                    // Body
+                    ctx.beginPath();
+                    ctx.ellipse(0, 0, 3, 12, 0, 0, Math.PI * 2);
+                    ctx.fillStyle = '#333';
+                    ctx.fill();
+                    
+                    ctx.restore();
+                }
+            },
+            {
+                name: "Ripple",
+                init: () => ripples = [],
+                update: () => {
+                    if (Math.random() > 0.9) {
+                        ripples.push({ x: mouseX, y: mouseY, radius: 0, maxRadius: 100, life: 1 });
+                    }
+                    
+                    ripples.forEach(r => {
+                        r.radius += 3;
+                        r.life = 1 - r.radius / r.maxRadius;
+                        
+                        ctx.beginPath();
+                        ctx.arc(r.x, r.y, r.radius, 0, Math.PI * 2);
+                        ctx.strokeStyle = `rgba(100, 200, 255, ${r.life})`;
+                        ctx.lineWidth = 2;
+                        ctx.stroke();
+                    });
+                    
+                    ripples = ripples.filter(r => r.radius < r.maxRadius);
+                }
+            },
+            {
+                name: "Pixel Explosion",
+                init: () => pixels = [],
+                update: () => {
+                    for (let i = 0; i < 5; i++) {
+                        pixels.push({
+                            x: mouseX,
+                            y: mouseY,
+                            vx: (Math.random() - 0.5) * 10,
+                            vy: (Math.random() - 0.5) * 10,
+                            size: Math.random() * 8 + 4,
+                            color: `hsl(${Math.random() * 360}, 100%, 50%)`,
+                            life: 1
+                        });
+                    }
+                    
+                    pixels.forEach(p => {
+                        p.x += p.vx;
+                        p.y += p.vy;
+                        p.life -= 0.02;
+                        
+                        ctx.fillStyle = p.color.replace(')', `, ${p.life})`).replace('hsl', 'hsla');
+                        ctx.fillRect(p.x, p.y, p.size, p.size);
+                    });
+                    
+                    pixels = pixels.filter(p => p.life > 0);
+                }
+            },
+            {
+                name: "DNA Helix",
+                init: () => helixTime = 0,
+                update: () => {
+                    helixTime += 0.1;
+                    
+                    for (let i = 0; i < 30; i++) {
+                        const y = mouseY - 150 + i * 10;
+                        const offset = Math.sin(helixTime + i * 0.3) * 30;
+                        
+                        ctx.beginPath();
+                        ctx.arc(mouseX + offset, y, 4, 0, Math.PI * 2);
+                        ctx.fillStyle = '#00ff88';
+                        ctx.fill();
+                        
+                        ctx.beginPath();
+                        ctx.arc(mouseX - offset, y, 4, 0, Math.PI * 2);
+                        ctx.fillStyle = '#ff0088';
+                        ctx.fill();
+                        
+                        if (i % 3 === 0) {
+                            ctx.beginPath();
+                            ctx.moveTo(mouseX + offset, y);
+                            ctx.lineTo(mouseX - offset, y);
+                            ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
+                            ctx.lineWidth = 1;
+                            ctx.stroke();
+                        }
+                    }
+                }
+            },
+            {
+                name: "Firework",
+                init: () => fireworks = [],
+                update: () => {
+                    if (Math.random() > 0.95) {
+                        const hue = Math.random() * 360;
+                        for (let i = 0; i < 50; i++) {
+                            const angle = (i / 50) * Math.PI * 2;
+                            fireworks.push({
+                                x: mouseX,
+                                y: mouseY,
+                                vx: Math.cos(angle) * (Math.random() * 5 + 3),
+                                vy: Math.sin(angle) * (Math.random() * 5 + 3),
+                                life: 1,
+                                color: `hsl(${hue}, 100%, 60%)`,
+                                size: Math.random() * 3 + 1
+                            });
+                        }
+                    }
+                    
+                    fireworks.forEach(f => {
+                        f.x += f.vx;
+                        f.y += f.vy;
+                        f.vy += 0.05;
+                        f.life -= 0.02;
+                        
+                        ctx.beginPath();
+                        ctx.arc(f.x, f.y, f.size, 0, Math.PI * 2);
+                        ctx.fillStyle = f.color.replace(')', `, ${f.life})`).replace('hsl', 'hsla');
+                        ctx.fill();
+                    });
+                    
+                    fireworks = fireworks.filter(f => f.life > 0);
+                }
+            },
+            {
+                name: "Orbit",
+                init: () => orbitParticles = [],
+                update: () => {
+                    if (orbitParticles.length < 100) {
+                        orbitParticles.push({
+                            angle: Math.random() * Math.PI * 2,
+                            dist: Math.random() * 100 + 50,
+                            speed: (Math.random() - 0.5) * 0.05,
+                            size: Math.random() * 3 + 1
+                        });
+                    }
+                    
+                    orbitParticles.forEach(p => {
+                        p.angle += p.speed;
+                        const x = mouseX + Math.cos(p.angle) * p.dist;
+                        const y = mouseY + Math.sin(p.angle) * p.dist;
+                        
+                        ctx.beginPath();
+                        ctx.arc(x, y, p.size, 0, Math.PI * 2);
+                        ctx.fillStyle = `rgba(255, 255, 255, ${1 - p.dist / 150})`;
+                        ctx.fill();
+                    });
+                }
+            },
+            {
+                name: "Pulse Wave",
+                init: () => pulseTime = 0,
+                update: () => {
+                    pulseTime += 0.1;
+                    
+                    for (let i = 0; i < 5; i++) {
+                        const radius = ((pulseTime * 50 + i * 40) % 200);
+                        const alpha = 1 - radius / 200;
+                        
+                        ctx.beginPath();
+                        ctx.arc(mouseX, mouseY, radius, 0, Math.PI * 2);
+                        ctx.strokeStyle = `rgba(255, 100, 255, ${alpha})`;
+                        ctx.lineWidth = 3;
+                        ctx.stroke();
+                    }
+                    
+                    ctx.beginPath();
+                    ctx.arc(mouseX, mouseY, 10, 0, Math.PI * 2);
+                    ctx.fillStyle = '#fff';
+                    ctx.fill();
+                }
+            },
+            {
+                name: "Snake",
+                init: () => snake = [],
+                update: () => {
+                    snake.unshift({ x: mouseX, y: mouseY });
+                    snake = snake.slice(0, 50);
+                    
+                    for (let i = 0; i < snake.length - 1; i++) {
+                        const t = i / snake.length;
+                        ctx.beginPath();
+                        ctx.arc(snake[i].x, snake[i].y, 10 * (1 - t), 0, Math.PI * 2);
+                        ctx.fillStyle = `hsl(${(i * 7) % 360}, 100%, 50%)`;
+                        ctx.fill();
+                    }
+                }
+            }
+        ];
+
+        let particles = [];
+        let drops = [];
+        let time = 0;
+        let angle = 0;
+        let trail = [];
+        let stars = [];
+        let smokeParticles = [];
+        let bubbles = [];
+        let ripples = [];
+        let pixels = [];
+        let fireworks = [];
+        let orbitParticles = [];
+        let snake = [];
+        let helixTime = 0;
+        let wingAngle = 0;
+        let scale = 1;
+        let pulseTime = 0;
+
+        function drawParticles() {
+            particles.forEach((p, i) => {
+                p.x += p.vx;
+                p.y += p.vy;
+                p.life -= 0.02;
+                
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, p.size * p.life, 0, Math.PI * 2);
+                ctx.fillStyle = p.color.replace(')', `, ${p.life})`).replace('hsl', 'hsla');
+                ctx.fill();
+            });
+            
+            particles = particles.filter(p => p.life > 0);
+        }
+
+        function initEffect() {
+            ctx.clearRect(0, 0, width, height);
+            particles = [];
+            drops = [];
+            time = 0;
+            angle = 0;
+            trail = [];
+            stars = [];
+            smokeParticles = [];
+            bubbles = [];
+            ripples = [];
+            pixels = [];
+            fireworks = [];
+            orbitParticles = [];
+            snake = [];
+            helixTime = 0;
+            wingAngle = 0;
+            scale = 1;
+            pulseTime = 0;
+            
+            if (effects[currentEffect].init) {
+                effects[currentEffect].init();
+            }
+            
+            document.getElementById('effectName').textContent = effects[currentEffect].name;
+            document.getElementById('current').textContent = currentEffect + 1;
+        }
+
+        function animate() {
+            ctx.fillStyle = 'rgba(10, 10, 15, 0.1)';
+            ctx.fillRect(0, 0, width, height);
+            
+            if (effects[currentEffect].update) {
+                effects[currentEffect].update();
+            }
+            
+            requestAnimationFrame(animate);
+        }
+
+        window.addEventListener('mousemove', (e) => {
+            mouseX = e.clientX;
+            mouseY = e.clientY;
+        });
+
+        document.getElementById('prev').addEventListener('click', () => {
+            currentEffect = (currentEffect - 1 + effects.length) % effects.length;
+            initEffect();
+        });
+
+        document.getElementById('next').addEventListener('click', () => {
+            currentEffect = (currentEffect + 1) % effects.length;
+            initEffect();
+        });
+
+        window.addEventListener('resize', () => {
+            width = canvas.width = window.innerWidth;
+            height = canvas.height = window.innerHeight;
+        });
+
+        window.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowLeft') {
+                currentEffect = (currentEffect - 1 + effects.length) % effects.length;
+                initEffect();
+            } else if (e.key === 'ArrowRight') {
+                currentEffect = (currentEffect + 1) % effects.length;
+                initEffect();
+            }
+        });
+
+        initEffect();
+        animate();
+    </script>
+</body>
+</html>
